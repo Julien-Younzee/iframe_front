@@ -1,0 +1,276 @@
+.results-slide-new {
+  padding: 2rem 1.5rem;
+}
+
+.results-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Loading */
+.loading-section {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  color: #666666;
+  font-size: 0.95rem;
+}
+
+/* Recommandation Section */
+.recommendation-section {
+  margin-bottom: 2rem;
+}
+
+.recommendation-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Boutons de sélection de taille */
+.size-options {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.size-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.size-option:hover {
+  border-color: #000000;
+  background: #f5f5f5;
+}
+
+.size-option.active {
+  background: #000000;
+  border-color: #000000;
+}
+
+.size-option.active .size-label,
+.size-option.active .size-value {
+  color: #ffffff;
+}
+
+/* Style spécial pour l'option "Idéal" */
+.size-option[data-type="ideal"] {
+  border-color: #22c55e;
+}
+
+.size-option[data-type="ideal"]:hover {
+  border-color: #16a34a;
+}
+
+.size-option[data-type="ideal"].active {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.size-option[data-type="ideal"].active:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.size-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.size-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.size-option.active .size-label {
+  color: #e0e0e0;
+}
+
+.recommendation-card {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.recommendation-text {
+  color: #333333;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Section Ajouter au panier */
+.add-to-cart-section {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-add-to-cart {
+  background: #000000;
+  color: #ffffff;
+  padding: 1rem 3rem;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  width: 100%;
+  max-width: 400px;
+}
+
+.btn-add-to-cart:hover {
+  background: #333333;
+  border-color: #333333;
+}
+
+/* Avatar Section */
+.avatar-section {
+  margin-bottom: 2rem;
+}
+
+.avatar-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.avatar-container {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.avatar-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.avatar-placeholder {
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  padding: 3rem 1rem;
+  text-align: center;
+  background: #fafafa;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.placeholder-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.placeholder-animation p {
+  color: #666666;
+  font-size: 0.95rem;
+}
+
+/* Error Section */
+.error-section {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.error-section .error-message {
+  color: #dc2626;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .results-slide-new {
+    padding: 1.5rem 1rem;
+  }
+
+  .results-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .size-options {
+    gap: 0.5rem;
+  }
+
+  .size-option {
+    padding: 0.875rem 0.25rem;
+  }
+
+  .size-label {
+    font-size: 0.688rem;
+  }
+
+  .size-value {
+    font-size: 1.25rem;
+  }
+
+  .recommendation-card {
+    padding: 1.25rem;
+  }
+
+  .recommendation-text {
+    font-size: 0.875rem;
+  }
+
+  .btn-add-to-cart {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+
+  .avatar-container,
+  .avatar-placeholder {
+    max-width: 100%;
+  }
+}

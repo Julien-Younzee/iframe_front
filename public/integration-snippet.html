@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+YOUNZEE VIRTUAL TRY-ON - SNIPPET D'INTÉGRATION
+================================================================================
+
+Ce fichier contient le code prêt à copier-coller pour intégrer Younzee
+sur votre site e-commerce (non-Shopify).
+
+Instructions:
+1. Copiez le code CSS dans votre <head> ou fichier CSS
+2. Copiez le bouton HTML là où vous voulez qu'il apparaisse (page produit)
+3. Copiez le code JavaScript avant </body>
+4. Remplacez 'https://votre-domaine-younzee.netlify.app' par votre URL
+
+================================================================================
+-->
+
+<!-- ========== 1. CSS À COPIER DANS VOTRE <HEAD> ========== -->
+<style>
+  /* Bouton "Essayer virtuellement" */
+  .younzee-cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 400px;
+    padding: 16px 24px;
+    margin: 16px 0;
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .younzee-cta-button:hover {
+    background: #333333;
+    border-color: #333333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .younzee-cta-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Container iframe */
+  .younzee-iframe-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .younzee-iframe-container.active {
+    pointer-events: auto;
+    opacity: 1;
+  }
+
+  .younzee-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Badge optionnel */
+  .younzee-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+  }
+
+  .younzee-badge strong {
+    color: #000;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .younzee-cta-button {
+      font-size: 15px;
+      padding: 14px 20px;
+    }
+  }
+</style>
+
+<!-- ========== 2. BOUTON À COPIER SUR VOTRE PAGE PRODUIT ========== -->
+<div class="younzee-cta-wrapper">
+  <button
+    id="younzee-open-button"
+    class="younzee-cta-button"
+    type="button"
+    aria-label="Essayer virtuellement avec Younzee"
+  >
+    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+    </svg>
+    Essayer virtuellement
+  </button>
+
+  <div class="younzee-badge">
+    powered by <strong>Younzee</strong>
+  </div>
+</div>
+
+<!-- Container de l'iframe (sera affiché au clic sur le bouton) -->
+<div id="younzee-iframe-container" class="younzee-iframe-container">
+  <iframe
+    id="younzee-iframe"
+    src=""
+    allow="camera"
+    title="Younzee Virtual Try-On"
+    loading="lazy"
+  ></iframe>
+</div>
+
+<!-- ========== 3. JAVASCRIPT À COPIER AVANT </BODY> ========== -->
+<script>
+(function() {
+  'use strict';
+
+  // ⚙️ CONFIGURATION - MODIFIEZ CES VALEURS
+  const YOUNZEE_IFRAME_URL = 'https://votre-domaine-younzee.netlify.app'; // ⚠️ MODIFIER ICI
+  const YOUNZEE_IFRAME_ORIGIN = YOUNZEE_IFRAME_URL;
+
+  // Éléments DOM
+  const iframeContainer = document.getElementById('younzee-iframe-container');
+  const iframe = document.getElementById('younzee-iframe');
+  const openButton = document.getElementById('younzee-open-button');
+
+  // ========== FONCTION À ADAPTER: Récupérer les données du produit ==========
+  function getCurrentProductData() {
+    // 🔧 ADAPTEZ CETTE FONCTION SELON VOTRE SITE E-COMMERCE
+
+    // Exemple 1: Récupération via data attributes
+    const productElement = document.querySelector('[data-product-id]');
+    if (productElement) {
+      return {
+        id: productElement.dataset.productId,
+        name: productElement.dataset.productName || document.title,
+        imageUrl: productElement.dataset.productImage ||
+                  document.querySelector('meta[property="og:image"]')?.content,
+        category: productElement.dataset.category,
+        price: productElement.dataset.price,
+      };
+    }
+
+    // Exemple 2: Récupération via meta tags OpenGraph
+    const ogImage = document.querySelector('meta[property="og:image"]')?.content;
+    const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
+
+    if (ogImage && ogTitle) {
+      return {
+        id: window.location.pathname,
+        name: ogTitle,
+        imageUrl: ogImage,
+      };
+    }
+
+    // Exemple 3: Récupération via JSON-LD
+    const jsonLdScript = document.querySelector('script[type="application/ld+json"]');
+    if (jsonLdScript) {
+      try {
+        const productData = JSON.parse(jsonLdScript.textContent);
+        if (productData['@type'] === 'Product') {
+          return {
+            id: productData.sku || productData.productID,
+            name: productData.name,
+            imageUrl: productData.image,
+            price: productData.offers?.price,
+          };
+        }
+      } catch (e) {
+        console.error('Erreur parsing JSON-LD:', e);
+      }
+    }
+
+    // Fallback: données minimales
+    console.warn('⚠️ Impossible de détecter automatiquement le produit. Veuillez adapter getCurrentProductData().');
+    return {
+      id: window.location.pathname,
+      name: document.title,
+      imageUrl: document.querySelector('img.product-image')?.src,
+    };
+  }
+
+  // ========== FONCTION À ADAPTER: Ajouter au panier ==========
+  function addToCart(productId, size, fitType) {
+    // 🔧 ADAPTEZ CETTE FONCTION SELON VOTRE SYSTÈME DE PANIER
+
+    console.log('🛒 Ajout au panier demandé:', { productId, size, fitType });
+
+    // Exemple 1: API custom
+    /*
+    fetch('/api/cart/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: productId,
+        quantity: 1,
+        size: size,
+        fitType: fitType,
+        source: 'younzee-vto'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert('✅ Produit ajouté au panier avec la taille ' + size);
+      closeYounzee();
+      // Rediriger vers le panier ou ouvrir un cart drawer
+      // window.location.href = '/cart';
+    })
+    .catch(error => {
+      console.error('❌ Erreur ajout panier:', error);
+      alert('Une erreur est survenue.');
+    });
+    */
+
+    // Exemple 2: Formulaire HTML
+    /*
+    const form = document.getElementById('add-to-cart-form');
+    const sizeSelect = form.querySelector('[name="size"]');
+    if (sizeSelect) {
+      sizeSelect.value = size;
+    }
+    form.submit();
+    */
+
+    // Exemple 3: Démo simple
+    alert(`✅ Produit ajouté au panier\n\nTaille: ${size}\nCoupe: ${fitType}\n\n(Veuillez adapter la fonction addToCart() dans le code)`);
+    closeYounzee();
+  }
+
+  // Ouvrir l'iframe
+  function openYounzee() {
+    // Charger l'iframe si pas encore fait
+    if (!iframe.src) {
+      iframe.src = YOUNZEE_IFRAME_URL;
+    }
+
+    iframeContainer.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Attendre que l'iframe soit chargée puis envoyer le message
+    iframe.addEventListener('load', function() {
+      iframe.contentWindow.postMessage({
+        type: 'OPEN_YOUNZEE'
+      }, YOUNZEE_IFRAME_ORIGIN);
+    }, { once: true });
+
+    // Si déjà chargée, envoyer directement
+    if (iframe.contentDocument?.readyState === 'complete') {
+      iframe.contentWindow.postMessage({
+        type: 'OPEN_YOUNZEE'
+      }, YOUNZEE_IFRAME_ORIGIN);
+    }
+  }
+
+  // Fermer l'iframe
+  function closeYounzee() {
+    iframeContainer.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Écouter les clics sur le bouton
+  if (openButton) {
+    openButton.addEventListener('click', function() {
+      console.log('🎯 Ouverture de Younzee VTO');
+      openYounzee();
+    });
+  }
+
+  // Écouter les messages de l'iframe
+  window.addEventListener('message', function(event) {
+    // Vérifier l'origine (⚠️ IMPORTANT EN PRODUCTION)
+    if (event.origin !== YOUNZEE_IFRAME_ORIGIN) {
+      return;
+    }
+
+    console.log('📩 Message reçu de Younzee:', event.data.type);
+
+    // L'iframe demande les informations du produit
+    if (event.data.type === 'REQUEST_CLOTHING_ITEM') {
+      const productData = getCurrentProductData();
+
+      if (productData) {
+        iframe.contentWindow.postMessage({
+          type: 'CLOTHING_ITEM_DATA',
+          item: productData
+        }, YOUNZEE_IFRAME_ORIGIN);
+
+        console.log('✅ Données produit envoyées:', productData);
+      } else {
+        console.error('❌ Impossible de récupérer les données du produit');
+      }
+    }
+
+    // L'utilisateur veut ajouter au panier
+    if (event.data.type === 'ADD_TO_CART') {
+      const { size, fitType } = event.data;
+      const productData = getCurrentProductData();
+
+      if (productData) {
+        addToCart(productData.id, size, fitType);
+      }
+    }
+
+    // L'iframe a été fermée
+    if (event.data.type === 'YOUNZEE_CLOSED') {
+      console.log('❌ Younzee fermé par l\'utilisateur');
+      closeYounzee();
+    }
+  });
+
+  // Précharger l'iframe au survol (optionnel, améliore la performance)
+  if (openButton) {
+    openButton.addEventListener('mouseenter', function() {
+      if (!iframe.src) {
+        iframe.src = YOUNZEE_IFRAME_URL;
+      }
+    }, { once: true });
+  }
+
+  // Permettre de fermer avec la touche Échap
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && iframeContainer.classList.contains('active')) {
+      closeYounzee();
+    }
+  });
+
+})();
+</script>
+
+<!-- ========== FIN DU CODE D'INTÉGRATION ========== -->

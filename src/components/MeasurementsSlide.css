@@ -1,0 +1,96 @@
+.measurements-slide h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+
+.slide-description {
+  color: #666666;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.measurement-form {
+  max-width: 400px;
+  margin: 0 auto 2rem;
+}
+
+.measurement-form .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #000000;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Boutons de sélection du sexe */
+.gender-buttons {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.gender-btn {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.gender-btn:hover {
+  border-color: #000000;
+  background: #f5f5f5;
+}
+
+.gender-btn.active {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+.gender-btn.active:hover {
+  background: #333333;
+  border-color: #333333;
+}
+
+.input-with-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-unit input {
+  flex: 1;
+  padding: 0.875rem 3.5rem 0.875rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  width: 100%;
+  background: #ffffff;
+}
+
+.input-with-unit input:focus {
+  outline: none;
+  border-color: #000000;
+}
+
+.input-with-unit input.error {
+  border-color: #dc2626;
+}
+
+.input-with-unit .unit {
+  position: absolute;
+  right: 1rem;
+  color: #666666;
+  font-weight: 500;
+  pointer-events: none;
+}

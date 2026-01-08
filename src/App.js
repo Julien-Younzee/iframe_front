@@ -1,24 +1,308 @@
-import logo from './logo.svg';
+import { useState, useEffect } from 'react';
 import './App.css';
+import PhoneAuthSlide from './components/PhoneAuthSlide';
+import MeasurementsSlide from './components/MeasurementsSlide';
+import ClothingSizesSlide from './components/ClothingSizesSlide';
+import SelfieSlide from './components/SelfieSlide';
+import ResultsSlideNew from './components/ResultsSlideNew';
+import { clearUserCache } from './services/cacheService';
+import { getShopperDetails, convertImageUrlToBase64 as convertAvatarToBase64, createShopper } from './services/shopperService';
+import { convertImageUrlToBase64 as convertClothingImageToBase64 } from './services/imageService';
 
 function App() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState({
+    gender: '',
+    height: '',
+    weight: '',
+    sizeTop: '',
+    sizeBottom: '',
+    selfieBase64: '',
+    clothingItem: null,
+    clothingImageBase64: '', // Image du vêtement en base64 pour VTO
+    avatarUrl: '', // URL de l'avatar depuis PostgreSQL
+    avatarBase64: '', // Avatar en base64 pour l'API VTO
+  });
+
+  // Détection du vêtement depuis la page parente
+  useEffect(() => {
+    const handleMessage = async (event) => {
+      try {
+        if (event.data.type === 'CLOTHING_ITEM_DATA') {
+          const clothingItem = event.data.item;
+          setUserData((prev) => ({ ...prev, clothingItem }));
+
+          // Convertir l'image du vêtement en base64 si une URL est fournie
+          if (clothingItem?.imageUrl) {
+            console.log('🖼️ Conversion de l\'image du vêtement en base64...');
+            try {
+              const clothingImageBase64 = await convertClothingImageToBase64(clothingItem.imageUrl);
+              setUserData((prev) => ({ ...prev, clothingImageBase64 }));
+              console.log('✅ Image du vêtement convertie en base64');
+            } catch (conversionError) {
+              console.error('❌ Erreur conversion image vêtement:', conversionError);
+            }
+          }
+        }
+
+        // Message pour ouvrir la popup
+        if (event.data.type === 'OPEN_YOUNZEE') {
+          setIsOpen(true);
+        }
+
+        // Message pour fermer la popup
+        if (event.data.type === 'CLOSE_YOUNZEE') {
+          setIsOpen(false);
+        }
+      } catch (error) {
+        console.error('Erreur lors du traitement du message:', error);
+      }
+    };
+
+    // Demander les infos du vêtement à la page parente
+    window.parent.postMessage({ type: 'REQUEST_CLOTHING_ITEM' }, '*');
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Ouvrir automatiquement au démarrage (pour le développement)
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
+
+  // Gérer la connexion - utilisateur existant
+  const handlePhoneAuthComplete = async ({ user: authUser }) => {
+    setIsAuthenticated(true);
+
+    try {
+      // Récupérer l'avatar depuis PostgreSQL et le convertir en base64
+      let avatarUrl = '';
+      let avatarBase64 = '';
+
+      try {
+        const shopperData = await getShopperDetails();
+        if (shopperData && shopperData.avatar_path) {
+          avatarUrl = shopperData.avatar_path;
+          console.log('Avatar récupéré depuis mirror-api:', avatarUrl);
+
+          // Convertir l'image en base64 pour l'API VTO
+          try {
+            avatarBase64 = await convertAvatarToBase64(avatarUrl);
+            console.log('Avatar converti en base64');
+          } catch (conversionError) {
+            console.warn('Impossible de convertir l\'avatar en base64:', conversionError);
+          }
+        }
+      } catch (apiError) {
+        console.warn('Impossible de récupérer l\'avatar depuis mirror-api:', apiError);
+      }
+
+      // Si un shopper existe avec avatar, aller directement aux résultats
+      if (avatarUrl) {
+        // Utilisateur existant avec avatar - aller directement aux résultats
+        setUserData((prev) => ({
+          ...prev,
+          avatarUrl: avatarUrl,
+          avatarBase64: avatarBase64,
+        }));
+        setCurrentSlide(4);
+      } else {
+        // Nouveau shopper ou shopper sans avatar - continuer le flux normal
+        setUserData((prev) => ({
+          ...prev,
+          avatarUrl: avatarUrl,
+          avatarBase64: avatarBase64,
+        }));
+        setCurrentSlide(1);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      // En cas d'erreur, continuer le flux normal
+      setCurrentSlide(1);
+    }
+  };
+
+  // Gérer le "skip" - continuer sans compte
+  const handleSkipAuth = () => {
+    setIsAuthenticated(false);
+    setCurrentSlide(1);
+  };
+
+  // Gérer la sauvegarde du compte depuis ResultsSlide
+  const handleSaveAccount = async ({ user: authUser, userData: savedData }) => {
+    try {
+      setIsAuthenticated(true);
+
+      // Mapper gender vers gender_id (1 = homme, 2 = femme)
+      const genderMapping = {
+        'homme': 1,
+        'femme': 2,
+        'male': 1,
+        'female': 2,
+      };
+
+      // Préparer les données pour createShopper
+      const shopperData = {
+        firebase_id: authUser.uid,
+        nickname: authUser.phoneNumber || 'Utilisateur',
+        first_name: authUser.phoneNumber || 'Utilisateur',
+        number_phone: authUser.phoneNumber || '',
+        email: authUser.email || `${authUser.uid}@younzee.temp`,
+        gender_id: genderMapping[userData.gender?.toLowerCase()] || null,
+        size_cm: userData.height ? parseFloat(userData.height) : null,
+        weight_kg: userData.weight ? parseFloat(userData.weight) : null,
+        selfie_path: userData.selfieBase64 || null,
+      };
+
+      // Créer le shopper dans mirror-api (PostgREST)
+      await createShopper(shopperData);
+
+      // Nettoyer le cache local
+      clearUserCache();
+
+      console.log('✅ Compte créé avec succès dans mirror-api');
+    } catch (error) {
+      console.error('Erreur lors de la création du compte:', error);
+    }
+  };
+
+  const renderCurrentSlide = () => {
+    switch (currentSlide) {
+      case 0:
+        return (
+          <PhoneAuthSlide
+            key="auth"
+            onNext={handlePhoneAuthComplete}
+            onSkip={handleSkipAuth}
+          />
+        );
+      case 1:
+        return (
+          <MeasurementsSlide
+            key="measurements"
+            onNext={(data) => {
+              setUserData((prev) => ({ ...prev, ...data }));
+              setCurrentSlide(2);
+            }}
+            onBack={() => setCurrentSlide(0)}
+            initialData={{
+              gender: userData.gender,
+              height: userData.height,
+              weight: userData.weight,
+            }}
+          />
+        );
+      case 2:
+        return (
+          <ClothingSizesSlide
+            key="sizes"
+            onNext={(data) => {
+              setUserData((prev) => ({ ...prev, ...data }));
+              setCurrentSlide(3);
+            }}
+            onBack={() => setCurrentSlide(1)}
+            initialData={{ sizeTop: userData.sizeTop, sizeBottom: userData.sizeBottom }}
+          />
+        );
+      case 3:
+        return (
+          <SelfieSlide
+            key="selfie"
+            onNext={(data) => {
+              setUserData((prev) => ({ ...prev, ...data }));
+              setCurrentSlide(4);
+            }}
+            onBack={() => setCurrentSlide(2)}
+            initialSelfie={userData.selfieBase64}
+          />
+        );
+      case 4:
+        return (
+          <ResultsSlideNew
+            key="results"
+            userData={userData}
+            isAuthenticated={isAuthenticated}
+            onSaveAccount={handleSaveAccount}
+            onRestart={() => {
+              setCurrentSlide(0);
+              setIsAuthenticated(false);
+              clearUserCache();
+              setUserData({
+                gender: '',
+                height: '',
+                weight: '',
+                sizeTop: '',
+                sizeBottom: '',
+                selfieBase64: '',
+                clothingItem: null,
+              });
+            }}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    // Notifier la page parente de la fermeture
+    window.parent.postMessage({ type: 'YOUNZEE_CLOSED' }, '*');
+  };
+
+  // Calculer les étapes de progression à afficher
+  const progressSteps = [0, 1, 2, 3, 4];
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      {/* Overlay */}
+      <div
+        className={`younzee-overlay ${isOpen ? 'open' : ''}`}
+        onClick={handleClose}
+      />
+
+      {/* Popup/Slider */}
+      <div className={`younzee-popup ${isOpen ? 'open' : ''}`}>
+        {/* Header */}
+        <div className="popup-header">
+          {/* Indicateur de progression dans le header */}
+          <div className="progress-indicator">
+            {progressSteps.map((step) => (
+              <div
+                key={step}
+                className={`progress-dot ${
+                  step === currentSlide ? 'active' : ''
+                } ${step < currentSlide ? 'completed' : ''}`}
+              />
+            ))}
+          </div>
+          <button className="close-button" onClick={handleClose} aria-label="Fermer">
+            ×
+          </button>
+        </div>
+
+        {/* Contenu des slides */}
+        <div className="slide-container">{renderCurrentSlide()}</div>
+
+        {/* Footer */}
+        <div className="popup-footer">
+          <div className="footer-content">
+            <div className="footer-branding">
+              <span className="footer-powered">powered by</span>
+              <div className="footer-logo-placeholder">[LOGO]</div>
+              <span className="footer-brand-name">Younzee</span>
+            </div>
+            <p className="footer-privacy">
+              En continuant, vous acceptez notre{' '}
+              <a href="#" className="footer-link">politique de confidentialité</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

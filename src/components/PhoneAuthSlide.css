@@ -1,0 +1,223 @@
+.slide-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.info-box {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.info-box .info-text {
+  margin: 0 0 1rem 0;
+  color: #000000;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-list li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #333333;
+  line-height: 1.5;
+}
+
+.info-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0.5rem;
+  color: #000000;
+  font-weight: bold;
+}
+
+.auth-form {
+  margin-top: 2rem;
+}
+
+.phone-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.country-select {
+  flex-shrink: 0;
+  width: 120px;
+  padding: 0.875rem 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.country-select:focus {
+  outline: none;
+  border-color: #000000;
+}
+
+.phone-input {
+  flex: 1;
+}
+
+.code-input {
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 0.5rem;
+  font-weight: 500;
+}
+
+.skip-section {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Styles spécifiques pour les boutons de PhoneAuthSlide */
+.auth-form .btn-primary {
+  background: #ffde59;
+  color: #000000;
+  border: 2px solid #ffde59;
+}
+
+.auth-form .btn-primary:hover:not(:disabled) {
+  background: #ffd633;
+  border-color: #ffd633;
+}
+
+.skip-section .btn-text {
+  background: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
+  padding: 0.875rem 2rem;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.skip-section .btn-text:hover {
+  background: #333333;
+  border-color: #333333;
+  color: #ffffff;
+}
+
+/* Styles pour le conteneur reCAPTCHA */
+#recaptcha-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0;
+  min-height: 78px;
+  overflow: visible !important;
+  position: relative;
+  z-index: 99999;
+  pointer-events: auto !important;
+  transform: none !important;
+  will-change: auto !important;
+  transition: none !important;
+}
+
+/* Cacher le reCAPTCHA quand on est sur l'étape code */
+/* Au lieu de visibility:hidden, on le déplace hors écran pour que le DOM reste intact */
+#recaptcha-container.hidden {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  pointer-events: none !important;
+  /* Garder les dimensions pour éviter que reCAPTCHA ne détecte un changement */
+  width: 304px !important;
+  height: 78px !important;
+  opacity: 0 !important;
+}
+
+/* S'assurer que le reCAPTCHA est responsive sur mobile */
+#recaptcha-container > div {
+  transform-origin: center center;
+  pointer-events: auto;
+}
+
+#recaptcha-container iframe {
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .slide-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .info-box {
+    padding: 1rem;
+  }
+
+  .phone-input-group {
+    flex-direction: column;
+  }
+
+  .country-select {
+    width: 100%;
+  }
+
+  .code-input {
+    font-size: 1.25rem;
+    letter-spacing: 0.25rem;
+  }
+
+  .navigation-buttons {
+    flex-direction: column;
+  }
+
+  .navigation-buttons .btn {
+    width: 100%;
+  }
+
+  .skip-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  /* Adapter le reCAPTCHA sur mobile */
+  #recaptcha-container {
+    margin: 1rem 0;
+    padding: 1rem 0;
+    touch-action: auto !important;
+    /* NE PAS utiliser will-change ou transform qui causent des conflits */
+    position: relative !important;
+  }
+
+  /* Forcer tous les éléments du reCAPTCHA à être cliquables */
+  #recaptcha-container *,
+  #recaptcha-container iframe {
+    pointer-events: auto !important;
+    touch-action: auto !important;
+  }
+
+  /* S'assurer que le conteneur de slide n'interfère pas */
+  .slide-content {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Pour les écrans < 380px, scaler légèrement le reCAPTCHA */
+@media (max-width: 380px) {
+  #recaptcha-container > div > div {
+    transform: scale(0.9);
+    transform-origin: center center;
+  }
+}

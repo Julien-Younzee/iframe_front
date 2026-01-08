@@ -1,0 +1,318 @@
+{% comment %}
+================================================================================
+YOUNZEE VIRTUAL TRY-ON - INTÉGRATION SHOPIFY
+================================================================================
+
+Instructions d'installation:
+1. Copiez ce code dans un nouveau snippet: snippets/younzee-vto.liquid
+2. Incluez le snippet dans votre theme.liquid avant </body>:
+   {% render 'younzee-vto' %}
+3. Configurez les variables ci-dessous avec vos URLs
+
+================================================================================
+{% endcomment %}
+
+{% comment %} CONFIGURATION {% endcomment %}
+{% assign younzee_iframe_url = "https://votre-domaine-younzee.netlify.app" %}
+{% assign younzee_enabled_on_product_page = true %}
+
+{% if template contains 'product' and younzee_enabled_on_product_page %}
+
+<!-- Styles pour le bouton et l'iframe -->
+<style>
+  /* Bouton "Essayer virtuellement" */
+  .younzee-cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px 24px;
+    margin: 16px 0;
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .younzee-cta-button:hover {
+    background: #333333;
+    border-color: #333333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .younzee-cta-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Container iframe - prend toute la page */
+  .younzee-iframe-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .younzee-iframe-container.active {
+    pointer-events: auto;
+    opacity: 1;
+  }
+
+  .younzee-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Badge "Powered by Younzee" (optionnel) */
+  .younzee-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+  }
+
+  .younzee-badge strong {
+    color: #000;
+  }
+
+  /* Responsive mobile */
+  @media (max-width: 768px) {
+    .younzee-cta-button {
+      font-size: 15px;
+      padding: 14px 20px;
+    }
+  }
+</style>
+
+<!-- Bouton CTA sur la page produit -->
+<div class="younzee-cta-wrapper">
+  <button
+    id="younzee-open-button"
+    class="younzee-cta-button"
+    type="button"
+    aria-label="Essayer virtuellement avec Younzee"
+  >
+    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+    </svg>
+    Essayer virtuellement
+  </button>
+
+  <div class="younzee-badge">
+    powered by <strong>Younzee</strong>
+  </div>
+</div>
+
+<!-- Container de l'iframe (caché par défaut) -->
+<div id="younzee-iframe-container" class="younzee-iframe-container">
+  <iframe
+    id="younzee-iframe"
+    src="{{ younzee_iframe_url }}"
+    allow="camera"
+    title="Younzee Virtual Try-On"
+    loading="lazy"
+  ></iframe>
+</div>
+
+<!-- Script de communication avec l'iframe -->
+<script>
+(function() {
+  'use strict';
+
+  // Configuration
+  const YOUNZEE_IFRAME_ORIGIN = '{{ younzee_iframe_url }}';
+  const iframeContainer = document.getElementById('younzee-iframe-container');
+  const iframe = document.getElementById('younzee-iframe');
+  const openButton = document.getElementById('younzee-open-button');
+
+  // Données du produit Shopify actuel
+  function getCurrentProductData() {
+    {% if product %}
+    return {
+      id: '{{ product.id }}',
+      handle: '{{ product.handle }}',
+      title: '{{ product.title | escape }}',
+      vendor: '{{ product.vendor | escape }}',
+      type: '{{ product.type | escape }}',
+
+      // Image principale du produit
+      imageUrl: '{{ product.featured_image | img_url: "1024x1024" }}',
+
+      // Variante sélectionnée
+      variant: {
+        id: '{{ product.selected_or_first_available_variant.id }}',
+        title: '{{ product.selected_or_first_available_variant.title | escape }}',
+        price: '{{ product.selected_or_first_available_variant.price | money_without_currency }}',
+        available: {{ product.selected_or_first_available_variant.available | json }},
+      },
+
+      // Métadonnées utiles
+      tags: {{ product.tags | json }},
+    };
+    {% else %}
+    return null;
+    {% endif %}
+  }
+
+  // Ouvrir l'iframe
+  function openYounzee() {
+    iframeContainer.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Empêcher le scroll de la page
+
+    // Envoyer un message pour ouvrir la popup dans l'iframe
+    iframe.contentWindow.postMessage({
+      type: 'OPEN_YOUNZEE'
+    }, YOUNZEE_IFRAME_ORIGIN);
+  }
+
+  // Fermer l'iframe
+  function closeYounzee() {
+    iframeContainer.classList.remove('active');
+    document.body.style.overflow = ''; // Réactiver le scroll
+  }
+
+  // Écouter les clics sur le bouton
+  if (openButton) {
+    openButton.addEventListener('click', function() {
+      console.log('🎯 Ouverture de Younzee VTO');
+      openYounzee();
+    });
+  }
+
+  // Écouter les messages de l'iframe
+  window.addEventListener('message', function(event) {
+    // Vérifier l'origine en production
+    if (event.origin !== YOUNZEE_IFRAME_ORIGIN) {
+      return;
+    }
+
+    console.log('📩 Message reçu de Younzee:', event.data.type);
+
+    // L'iframe demande les informations du produit
+    if (event.data.type === 'REQUEST_CLOTHING_ITEM') {
+      const productData = getCurrentProductData();
+
+      if (productData) {
+        iframe.contentWindow.postMessage({
+          type: 'CLOTHING_ITEM_DATA',
+          item: productData
+        }, YOUNZEE_IFRAME_ORIGIN);
+
+        console.log('✅ Données produit envoyées à Younzee');
+      }
+    }
+
+    // L'utilisateur veut ajouter au panier avec la taille recommandée
+    if (event.data.type === 'ADD_TO_CART') {
+      const { size, fitType } = event.data;
+
+      console.log('🛒 Ajout au panier:', { size, fitType });
+
+      // Ajouter au panier Shopify
+      addToShopifyCart(size, fitType);
+    }
+
+    // L'iframe a été fermée
+    if (event.data.type === 'YOUNZEE_CLOSED') {
+      console.log('❌ Younzee fermé');
+      closeYounzee();
+    }
+  });
+
+  // Fonction pour ajouter au panier Shopify
+  function addToShopifyCart(size, fitType) {
+    {% if product %}
+
+    // Trouver la variante correspondant à la taille recommandée
+    const variants = {{ product.variants | json }};
+
+    // Chercher la variante avec la bonne taille
+    let variantToAdd = variants.find(v => {
+      const title = v.title.toLowerCase();
+      return title.includes(size.toLowerCase());
+    });
+
+    // Si aucune variante trouvée, utiliser la variante sélectionnée
+    if (!variantToAdd) {
+      variantToAdd = variants.find(v => v.id === {{ product.selected_or_first_available_variant.id }});
+    }
+
+    if (!variantToAdd || !variantToAdd.available) {
+      alert('Désolé, cette taille n\'est pas disponible.');
+      return;
+    }
+
+    // Ajouter au panier via l'API Shopify
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: variantToAdd.id,
+        quantity: 1,
+        properties: {
+          'Taille recommandée': size,
+          'Type de coupe': fitType === 'fit' ? 'Près du corps' :
+                          fitType === 'ideal' ? 'Ajustée' : 'Oversize',
+          '_Younzee VTO': 'Oui'
+        }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('✅ Produit ajouté au panier:', data);
+
+      // Fermer l'iframe
+      closeYounzee();
+
+      // Afficher une notification ou rediriger vers le panier
+      if (window.theme && window.theme.cart && window.theme.cart.openCart) {
+        // Si votre thème a une fonction pour ouvrir le cart drawer
+        window.theme.cart.openCart();
+      } else {
+        // Sinon, afficher une alerte simple
+        alert('✅ Produit ajouté au panier avec la taille ' + size + ' (' + fitType + ')');
+
+        // Optionnel: rediriger vers le panier
+        // window.location.href = '/cart';
+      }
+
+      // Déclencher l'événement Shopify pour mettre à jour le compteur du panier
+      document.dispatchEvent(new CustomEvent('cart:updated'));
+    })
+    .catch(error => {
+      console.error('❌ Erreur ajout panier:', error);
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    });
+
+    {% endif %}
+  }
+
+  // Précharger l'iframe au survol du bouton (optionnel, améliore la performance)
+  if (openButton) {
+    openButton.addEventListener('mouseenter', function() {
+      if (!iframe.src) {
+        iframe.src = YOUNZEE_IFRAME_ORIGIN;
+      }
+    }, { once: true });
+  }
+})();
+</script>
+
+{% endif %}
