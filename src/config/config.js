@@ -56,6 +56,14 @@ export const MIRROR_API_CONFIG = {
 };
 
 /**
+ * Configuration Signed URL Service (Cloud Run pour génération d'URLs signées GCS)
+ */
+export const SIGNED_URL_SERVICE_CONFIG = {
+  // URL de base du service de génération d'URLs signées
+  BASE_URL: process.env.REACT_APP_SIGNED_URL_SERVICE_URL || '',
+};
+
+/**
  * Messages et textes de l'application
  */
 export const TEXTS = {

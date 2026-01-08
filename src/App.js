@@ -137,24 +137,14 @@ function App() {
       setIsAuthenticated(true);
 
       // Mapper gender vers gender_id (1 = homme, 2 = femme)
-      const genderMapping = {
-        'homme': 1,
-        'femme': 2,
-        'male': 1,
-        'female': 2,
-      };
-
       // Préparer les données pour createShopper
+      // Pour l'instant, on n'envoie que les champs obligatoires
       const shopperData = {
         firebase_id: authUser.uid,
-        nickname: authUser.phoneNumber || 'Utilisateur',
-        first_name: authUser.phoneNumber || 'Utilisateur',
+        nickname: 'Younzee User', // Temporaire - à modifier plus tard
+        first_name: 'Younzee', // Temporaire - à modifier plus tard
         number_phone: authUser.phoneNumber || '',
-        email: authUser.email || `${authUser.uid}@younzee.temp`,
-        gender_id: genderMapping[userData.gender?.toLowerCase()] || null,
-        size_cm: userData.height ? parseFloat(userData.height) : null,
-        weight_kg: userData.weight ? parseFloat(userData.weight) : null,
-        selfie_path: userData.selfieBase64 || null,
+        email: `${authUser.uid}@younzee.temp`, // Temporaire - à modifier plus tard
       };
 
       // Créer le shopper dans mirror-api (PostgREST)

@@ -1,4 +1,4 @@
-import { MIRROR_API_CONFIG } from '../config/config';
+import { MIRROR_API_CONFIG, SIGNED_URL_SERVICE_CONFIG } from '../config/config';
 import { getCurrentUser } from './firebaseAuth';
 
 /**
@@ -75,23 +75,15 @@ export const getShopperDetails = async () => {
  */
 export const createShopper = async (shopperData) => {
   try {
-    const url = `${MIRROR_API_CONFIG.BASE_URL}/shoppers`;
-
-    // Ajouter les timestamps
-    const payload = {
-      ...shopperData,
-      inserted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const url = `${MIRROR_API_CONFIG.BASE_URL}/api/shopper/create`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Prefer': 'return=representation', // PostgREST header pour retourner le shopper créé
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(shopperData),
     });
 
     if (!response.ok) {
@@ -110,8 +102,75 @@ export const createShopper = async (shopperData) => {
 };
 
 /**
- * Convertit une image URL en base64
- * @param {string} imageUrl - L'URL de l'image
+ * Génère une URL signée pour accéder à un fichier dans GCS
+ * @param {string} gcsUrl - URL complète GCS (ex: https://storage.googleapis.com/bucket/wardrobe/user_xxx/styles/xxx/file.png)
+ * @returns {Promise<string>} - URL signée avec headers CORS appropriés
+ */
+export const generateSignedUrl = async (gcsUrl) => {
+  try {
+    if (!gcsUrl) {
+      throw new Error('URL GCS requise');
+    }
+
+    if (!SIGNED_URL_SERVICE_CONFIG.BASE_URL) {
+      console.warn('⚠️ Service d\'URL signée non configuré, utilisation de l\'URL directe');
+      return gcsUrl;
+    }
+
+    // Parser l'URL GCS pour extraire bucket, blob et user_id
+    // Format: https://storage.googleapis.com/bucket-name/wardrobe/user_xxx/styles/xxx/file.ext
+    const urlParts = gcsUrl.replace('https://storage.googleapis.com/', '').split('/');
+    const bucket = urlParts[0];
+    const blob = urlParts.slice(1).join('/');
+
+    // Extraire le user_id du chemin (format: wardrobe/user_xxx/...)
+    let userId = null;
+    const userIdMatch = blob.match(/user_([a-f0-9-]+)/);
+    if (userIdMatch) {
+      userId = userIdMatch[1];
+    }
+
+    console.log('📝 Génération d\'URL signée pour:', { bucket, blob, user_id: userId });
+
+    const requestBody = {
+      bucket,
+      blob,
+      action: 'read',
+    };
+
+    // Ajouter le user_id s'il a été trouvé
+    if (userId) {
+      requestBody.user_id = userId;
+    }
+
+    const response = await fetch(`${SIGNED_URL_SERVICE_CONFIG.BASE_URL}/generate-signed-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur lors de la génération de l'URL signée: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ URL signée générée');
+
+    return data.url;
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération de l\'URL signée:', error);
+    // Fallback: retourner l'URL originale
+    return gcsUrl;
+  }
+};
+
+/**
+ * Convertit une image URL en base64 en utilisant une URL signée si nécessaire
+ * @param {string} imageUrl - L'URL de l'image (peut être une URL GCS)
  * @returns {Promise<string>} - L'image en base64
  */
 export const convertImageUrlToBase64 = async (imageUrl) => {
@@ -120,8 +179,14 @@ export const convertImageUrlToBase64 = async (imageUrl) => {
       throw new Error('URL de l\'image est requise');
     }
 
+    // Si c'est une URL GCS, générer une URL signée d'abord
+    let finalUrl = imageUrl;
+    if (imageUrl.includes('storage.googleapis.com')) {
+      finalUrl = await generateSignedUrl(imageUrl);
+    }
+
     // Fetch l'image
-    const response = await fetch(imageUrl);
+    const response = await fetch(finalUrl);
 
     if (!response.ok) {
       throw new Error(`Erreur lors du chargement de l'image: ${response.status}`);
