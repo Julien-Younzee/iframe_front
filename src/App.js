@@ -222,15 +222,19 @@ function App() {
               setCurrentSlide(0);
               setIsAuthenticated(false);
               clearUserCache();
-              setUserData({
+              // Préserver les données du vêtement qui viennent de la page parente
+              setUserData((prev) => ({
                 gender: '',
                 height: '',
                 weight: '',
                 sizeTop: '',
                 sizeBottom: '',
                 selfieBase64: '',
-                clothingItem: null,
-              });
+                clothingItem: prev.clothingItem, // Conserver le vêtement
+                clothingImageBase64: prev.clothingImageBase64, // Conserver l'image base64
+                avatarUrl: '',
+                avatarBase64: '',
+              }));
             }}
           />
         );
@@ -284,8 +288,9 @@ function App() {
           <div className="footer-content">
             <div className="footer-branding">
               <span className="footer-powered">powered by</span>
-              <img src={logo} alt="Younzee" className="footer-logo" />
-              <span className="footer-brand-name">Younzee</span>
+              <a href="https://younzee.com" target="_blank" rel="noopener noreferrer" className="footer-logo-link">
+                <img src={logo} alt="Younzee" className="footer-logo" />
+              </a>
             </div>
             <p className="footer-privacy">
               En continuant, vous acceptez notre{' '}

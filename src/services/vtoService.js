@@ -219,14 +219,14 @@ export const generateMockSizeRecommendations = (sizeTop = 'M') => {
     fit: {
       size: sizes.fit,
       type: 'fit',
-      label: 'Ajusté',
+      label: 'Ajustée',
       description:
-        'Coupe ajustée qui épouse les formes du corps pour un style près du corps et moderne.',
+        'Coupe ajustée qui épouse les formes du corps pour un style près du corps et mais risque d\'être trop petit.',
     },
     ideal: {
       size: sizes.ideal,
       type: 'ideal',
-      label: 'Idéal',
+      label: 'Idéale',
       description:
         'Taille idéale offrant un équilibre parfait entre confort et style. Recommandée pour la plupart des situations.',
     },

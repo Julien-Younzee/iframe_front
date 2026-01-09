@@ -1,42 +1,42 @@
 .measurements-slide h2 {
-  font-size: 1.75rem;
+  font-size: 1.225rem;
   font-weight: 600;
   color: #000000;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .slide-description {
   color: #666666;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
+  margin-bottom: 1.4rem;
+  font-size: 0.665rem;
 }
 
 .measurement-form {
-  max-width: 400px;
-  margin: 0 auto 2rem;
+  max-width: 280px;
+  margin: 0 auto 1.4rem;
 }
 
 .measurement-form .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   color: #000000;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.63rem;
 }
 
 /* Boutons de sélection du sexe */
 .gender-buttons {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.525rem;
   width: 100%;
 }
 
 .gender-btn {
   flex: 1;
-  padding: 0.875rem 1rem;
+  padding: 0.613rem 0.7rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 5.6px;
+  font-size: 0.7rem;
   font-weight: 500;
   background: #ffffff;
   color: #000000;
@@ -69,10 +69,10 @@
 
 .input-with-unit input {
   flex: 1;
-  padding: 0.875rem 3.5rem 0.875rem 1rem;
+  padding: 0.613rem 2.45rem 0.613rem 0.7rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 5.6px;
+  font-size: 0.7rem;
   transition: border-color 0.2s;
   width: 100%;
   background: #ffffff;
@@ -89,8 +89,9 @@
 
 .input-with-unit .unit {
   position: absolute;
-  right: 1rem;
+  right: 0.7rem;
   color: #666666;
   font-weight: 500;
+  font-size: 0.7rem;
   pointer-events: none;
 }

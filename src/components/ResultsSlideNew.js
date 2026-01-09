@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './ResultsSlideNew.css';
 import { generateVirtualTryOn, generateMockSizeRecommendations } from '../services/vtoService';
 import { saveUserDataToCache } from '../services/cacheService';
-import SaveAccountPrompt from './SaveAccountPrompt';
+// import SaveAccountPrompt from './SaveAccountPrompt'; // Temporairement désactivé
 
 function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }) {
   const [isLoadingSizeReco, setIsLoadingSizeReco] = useState(true);
@@ -12,7 +12,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
   const [selectedFitType, setSelectedFitType] = useState('ideal'); // 'fit', 'ideal', 'oversize'
   const [errorSizeReco, setErrorSizeReco] = useState('');
   const [errorVTO, setErrorVTO] = useState('');
-  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  // const [showSavePrompt, setShowSavePrompt] = useState(false); // Temporairement désactivé
 
   useEffect(() => {
     generateResults();
@@ -99,9 +99,10 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
       }
 
       // Afficher le prompt de sauvegarde pour les utilisateurs non authentifiés
-      if (!isAuthenticated) {
-        setShowSavePrompt(true);
-      }
+      // Temporairement désactivé
+      // if (!isAuthenticated) {
+      //   setShowSavePrompt(true);
+      // }
     } catch (err) {
       console.error('❌ Erreur lors de la génération VTO:', err);
       setErrorVTO(
@@ -112,17 +113,18 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
     }
   };
 
-  const handleSaveAccount = (data) => {
-    // Ne pas cacher le prompt, le composant SaveAccountPrompt gérera l'affichage du succès
-    // setShowSavePrompt(false);
-    if (onSaveAccount) {
-      onSaveAccount(data);
-    }
-  };
+  // Temporairement désactivé
+  // const handleSaveAccount = (data) => {
+  //   // Ne pas cacher le prompt, le composant SaveAccountPrompt gérera l'affichage du succès
+  //   // setShowSavePrompt(false);
+  //   if (onSaveAccount) {
+  //     onSaveAccount(data);
+  //   }
+  // };
 
-  const handleSkipSave = () => {
-    setShowSavePrompt(false);
-  };
+  // const handleSkipSave = () => {
+  //   setShowSavePrompt(false);
+  // };
 
   const handleAddToCart = () => {
     const selectedSize = sizeRecommendation[selectedFitType].size;
@@ -225,14 +227,14 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
           ) : null}
         </div>
 
-        {/* Proposition de sauvegarde de compte */}
-        {!isLoadingSizeReco && !isLoadingVTO && showSavePrompt && (
+        {/* Proposition de sauvegarde de compte - Temporairement masqué */}
+        {/* {!isLoadingSizeReco && !isLoadingVTO && showSavePrompt && (
           <SaveAccountPrompt
             userData={userData}
             onSave={handleSaveAccount}
             onSkip={handleSkipSave}
           />
-        )}
+        )} */}
 
         <div className="navigation-buttons">
           <button className="btn btn-primary" onClick={onRestart}>

@@ -196,7 +196,7 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
         <div className="camera-controls">
           {!hasPhoto && isCameraActive && (
             <button className="btn btn-camera" onClick={capturePhoto}>
-              <span className="camera-icon">📸</span> Prendre la photo
+              Prendre la photo
             </button>
           )}
 

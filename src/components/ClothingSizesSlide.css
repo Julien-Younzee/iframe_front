@@ -2,35 +2,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 500px;
+  min-height: 350px;
 }
 
 .sizes-slide h2 {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.26rem;
+  margin-bottom: 0.35rem;
   color: #333;
 }
 
 .sizes-form {
-  max-width: 400px;
-  margin: 0 auto 2rem;
+  max-width: 280px;
+  margin: 0 auto 1.4rem;
 }
 
 .sizes-form select {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.525rem 0.7rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 5.6px;
+  font-size: 0.7rem;
   background-color: white;
   cursor: pointer;
   transition: border-color 0.3s;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 12px;
-  padding-right: 2.5rem;
+  background-position: right 0.7rem center;
+  background-size: 8.4px;
+  padding-right: 1.75rem;
 }
 
 .sizes-form select:focus {
@@ -43,5 +43,5 @@
 }
 
 .sizes-form select option {
-  padding: 0.5rem;
+  padding: 0.35rem;
 }
