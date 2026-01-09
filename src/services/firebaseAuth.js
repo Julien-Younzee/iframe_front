@@ -11,12 +11,23 @@ import { FIREBASE_CONFIG } from '../config/config';
 // Initialiser Firebase
 let app;
 let auth;
+let persistenceInitialized = false;
 
 try {
   app = initializeApp(FIREBASE_CONFIG);
   auth = getAuth(app);
 
-  setPersistence(auth, browserLocalPersistence);
+  // Initialiser la persistence de manière asynchrone
+  setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+      persistenceInitialized = true;
+      console.log('✅ Firebase persistence initialisée');
+    })
+    .catch((error) => {
+      console.warn('⚠️ Erreur lors de la configuration de la persistence Firebase:', error);
+      // Continuer même si la persistence échoue (peut arriver en iframe)
+      persistenceInitialized = true;
+    });
 } catch (error) {
   console.error('Erreur lors de l\'initialisation de Firebase:', error);
 }

@@ -83,7 +83,8 @@ function App() {
       let avatarBase64 = '';
 
       try {
-        const shopperData = await getShopperDetails();
+        // Passer explicitement l'utilisateur Firebase pour éviter les problèmes de timing
+        const shopperData = await getShopperDetails(authUser);
         if (shopperData && shopperData.avatar_path) {
           avatarUrl = shopperData.avatar_path;
           console.log('Avatar récupéré depuis mirror-api:', avatarUrl);

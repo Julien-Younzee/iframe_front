@@ -8,23 +8,24 @@ import { getCurrentUser } from './firebaseAuth';
 /**
  * Récupère les détails d'un shopper connecté via Firebase
  * Utilise le backend mirror-api avec authentification Firebase
+ * @param {Object} user - Utilisateur Firebase (optionnel, utilise getCurrentUser si non fourni)
  * @returns {Promise<Object|null>} - Les données du shopper ou null si non trouvé
  */
-export const getShopperDetails = async () => {
+export const getShopperDetails = async (user = null) => {
   try {
-    const user = getCurrentUser();
-    if (!user) {
+    const firebaseUser = user || getCurrentUser();
+    if (!firebaseUser) {
       throw new Error('Utilisateur non connecté');
     }
 
     // Récupérer le token Firebase
-    const token = await user.getIdToken();
+    const token = await firebaseUser.getIdToken();
 
     const url = `${MIRROR_API_CONFIG.BASE_URL}/api/shopper/details/`;
 
     console.log('🔍 Requête GET shopper details:', {
       url,
-      uid: user.uid,
+      uid: firebaseUser.uid,
       hasToken: !!token,
     });
 

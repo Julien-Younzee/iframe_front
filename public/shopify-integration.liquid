@@ -20,36 +20,25 @@ Instructions d'installation:
 
 <!-- Styles pour le bouton et l'iframe -->
 <style>
-  /* Bouton "Essayer virtuellement" */
+  /* Styles personnalisés uniquement pour les ajustements spécifiques */
   .younzee-cta-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 16px 24px;
-    margin: 16px 0;
-    background: #000000;
-    color: #ffffff;
-    border: 2px solid #000000;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
+    margin: 12px 0;
+    background: #ffde59 !important;
+    color: #000000 !important;
+    border-color: #ffde59 !important;
   }
 
   .younzee-cta-button:hover {
-    background: #333333;
-    border-color: #333333;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #e6c850 !important;
+    border-color: #e6c850 !important;
+    color: #000000 !important;
   }
 
   .younzee-cta-button svg {
-    width: 20px;
-    height: 20px;
+    flex-shrink: 0;
   }
 
   /* Container iframe - prend toute la page */
@@ -89,25 +78,17 @@ Instructions d'installation:
   .younzee-badge strong {
     color: #000;
   }
-
-  /* Responsive mobile */
-  @media (max-width: 768px) {
-    .younzee-cta-button {
-      font-size: 15px;
-      padding: 14px 20px;
-    }
-  }
 </style>
 
 <!-- Bouton CTA sur la page produit -->
 <div class="younzee-cta-wrapper">
   <button
     id="younzee-open-button"
-    class="younzee-cta-button"
+    class="younzee-cta-button button button--full-width button--secondary"
     type="button"
     aria-label="Essayer virtuellement avec Younzee"
   >
-    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px; margin-right: 8px;">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
     </svg>
     Essayer virtuellement
