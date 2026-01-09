@@ -200,42 +200,188 @@ export const checkVTOServiceHealth = async () => {
 };
 
 /**
- * Génère des recommandations de taille factices (pour développement/fallback)
- * @param {string} sizeTop - Taille de base
- * @returns {Object} - Recommandations factices
+ * Génère des recommandations de taille intelligentes basées sur le profil complet
+ * @param {Object} userData - Données utilisateur complètes
+ * @param {string} userData.gender - Genre ('homme' ou 'femme')
+ * @param {number} userData.height - Taille en cm
+ * @param {number} userData.weight - Poids en kg
+ * @param {string} userData.sizeTop - Taille actuelle haut
+ * @param {string} userData.sizeBottom - Taille actuelle bas
+ * @returns {Object} - Recommandations personnalisées
  */
-export const generateMockSizeRecommendations = (sizeTop = 'M') => {
-  const sizeMap = {
-    XS: { fit: 'XS', ideal: 'S', oversize: 'M' },
-    S: { fit: 'S', ideal: 'M', oversize: 'L' },
-    M: { fit: 'M', ideal: 'L', oversize: 'XL' },
-    L: { fit: 'L', ideal: 'XL', oversize: 'XXL' },
-    XL: { fit: 'XL', ideal: 'XXL', oversize: 'XXXL' },
+export const generateSmartMockRecommendations = (userData) => {
+  // Tailles disponibles dans la DB (aligné avec dataMapping.js)
+  const SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL'];
+
+  // Extraction et validation des données
+  const {
+    gender = 'homme',
+    height = 175,
+    weight = 70,
+    sizeTop = 'M',
+    sizeBottom = 'M',
+  } = userData || {};
+
+  // 1. Calculer l'IMC (Indice de Masse Corporelle)
+  const heightM = height / 100;
+  const imc = weight / (heightM * heightM);
+
+  // 2. Déterminer la morphologie selon l'IMC
+  let morphology = 'standard';
+  let morphologyLabel = 'Standard';
+
+  // Vérifier si l'IMC est valide (pas NaN, Infinity, ou valeur invalide)
+  if (!isNaN(imc) && isFinite(imc) && imc > 0) {
+    if (imc < 18.5) {
+      morphology = 'slim';
+      morphologyLabel = 'Mince';
+    } else if (imc >= 18.5 && imc < 25) {
+      morphology = 'standard';
+      morphologyLabel = 'Standard';
+    } else if (imc >= 25 && imc < 30) {
+      morphology = 'athletic';
+      morphologyLabel = 'Athlétique';
+    } else {
+      morphology = 'plus';
+      morphologyLabel = 'Corpulent';
+    }
+  } else {
+    // Si IMC invalide (données manquantes), utiliser morphologie standard par défaut
+    console.warn('⚠️ IMC invalide (données de taille/poids manquantes), utilisation de morphologie standard');
+    morphology = 'standard';
+    morphologyLabel = 'Standard (données manquantes)';
+  }
+
+  // 3. Index de la taille actuelle
+  const sizeIndex = SIZES.indexOf(sizeTop);
+  const validSizeIndex = sizeIndex >= 0 ? sizeIndex : SIZES.indexOf('M');
+
+  // 4. Calcul des offsets selon la morphologie
+  let fitOffset = 0;
+  let idealOffset = 1;
+  let oversizeOffset = 2;
+
+  switch (morphology) {
+    case 'slim':
+      // Personnes minces : ajusté peut être plus petit
+      fitOffset = -1;
+      idealOffset = 0;
+      oversizeOffset = 1;
+      break;
+    case 'standard':
+      // Morphologie standard : logique classique
+      fitOffset = 0;
+      idealOffset = 1;
+      oversizeOffset = 2;
+      break;
+    case 'athletic':
+      // Personnes athlétiques : besoin de plus d'espace
+      fitOffset = 0;
+      idealOffset = 1;
+      oversizeOffset = 3;
+      break;
+    case 'plus':
+      // Personnes corpulentes : recommandations plus larges
+      fitOffset = 1;
+      idealOffset = 2;
+      oversizeOffset = 3;
+      break;
+    default:
+      fitOffset = 0;
+      idealOffset = 1;
+      oversizeOffset = 2;
+  }
+
+  // 5. Ajustement selon les différences haut/bas
+  const sizeBottomIndex = SIZES.indexOf(sizeBottom);
+  if (sizeBottomIndex >= 0 && sizeTop !== sizeBottom) {
+    const diff = Math.abs(sizeBottomIndex - validSizeIndex);
+    if (diff > 1) {
+      // Silhouette non proportionnée : recommandation plus conservative
+      idealOffset = Math.min(idealOffset + 1, SIZES.length - validSizeIndex - 1);
+    }
+  }
+
+  // 6. Ajustement selon le genre (légère différence)
+  const genderAdjustment = gender === 'femme' ? 0 : 0; // Pour l'instant neutre, peut être ajusté
+
+  // 7. Calcul des tailles recommandées avec bornes
+  const calculateSize = (offset) => {
+    const index = validSizeIndex + offset + genderAdjustment;
+    return SIZES[Math.max(0, Math.min(index, SIZES.length - 1))];
   };
 
-  const sizes = sizeMap[sizeTop] || sizeMap.M;
+  const fitSize = calculateSize(fitOffset);
+  const idealSize = calculateSize(idealOffset);
+  const oversizeSize = calculateSize(oversizeOffset);
 
+  // 8. Génération des descriptions personnalisées
+  const fitDescription = morphology === 'slim'
+    ? 'Coupe près du corps qui valorise votre silhouette élancée'
+    : morphology === 'plus'
+    ? 'Coupe confortable qui épouse vos formes avec style'
+    : 'Coupe ajustée pour un style près du corps';
+
+  const idealDescription = `Notre recommandation pour votre profil. Équilibre parfait entre confort et style.`;
+
+  const oversizeDescription = morphology === 'athletic'
+    ? 'Style ample et décontracté, parfait pour un look streetwear sportif'
+    : 'Coupe oversize tendance pour un maximum de confort';
+
+  // 9. Retour de l'objet de recommandations
   return {
     fit: {
-      size: sizes.fit,
+      size: fitSize,
       type: 'fit',
       label: 'Ajustée',
-      description:
-        'Coupe ajustée qui épouse les formes du corps pour un style près du corps et mais risque d\'être trop petit.',
+      description: fitDescription,
     },
     ideal: {
-      size: sizes.ideal,
+      size: idealSize,
       type: 'ideal',
       label: 'Idéale',
-      description:
-        'Taille idéale offrant un équilibre parfait entre confort et style. Recommandée pour la plupart des situations.',
+      description: idealDescription,
     },
     oversize: {
-      size: sizes.oversize,
+      size: oversizeSize,
       type: 'oversize',
       label: 'Ample',
-      description:
-        'Coupe ample et décontractée pour un style streetwear et un maximum de confort.',
+      description: oversizeDescription,
+    },
+    // Métadonnées pour debug/analytics
+    metadata: {
+      imc: parseFloat(imc.toFixed(1)),
+      morphology: morphology,
+      morphologyLabel: morphologyLabel,
+      originalSize: sizeTop,
+      hasProportionDifference: sizeTop !== sizeBottom,
     },
   };
+};
+
+/**
+ * Génère des recommandations de taille factices (pour développement/fallback)
+ * Version simplifiée - utilise désormais generateSmartMockRecommendations
+ * @param {string|Object} sizeTopOrUserData - Soit la taille de base (string), soit userData complet (object)
+ * @returns {Object} - Recommandations factices
+ */
+export const generateMockSizeRecommendations = (sizeTopOrUserData = 'M') => {
+  // Rétrocompatibilité : accepte soit une string, soit un objet userData
+  let userData;
+
+  if (typeof sizeTopOrUserData === 'string') {
+    // Ancien format : juste la taille
+    userData = {
+      sizeTop: sizeTopOrUserData,
+      gender: 'homme',
+      height: 175,
+      weight: 70,
+      sizeBottom: sizeTopOrUserData,
+    };
+  } else {
+    // Nouveau format : objet userData complet
+    userData = sizeTopOrUserData;
+  }
+
+  return generateSmartMockRecommendations(userData);
 };

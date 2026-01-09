@@ -1,5 +1,6 @@
 import { MIRROR_API_CONFIG, SIGNED_URL_SERVICE_CONFIG } from '../config/config';
 import { getCurrentUser } from './firebaseAuth';
+import { mapShopperDataFromDB, mapUserDataToDB } from '../config/dataMapping';
 
 /**
  * Service pour interagir avec le backend mirror-api pour la gestion des shoppers
@@ -9,9 +10,10 @@ import { getCurrentUser } from './firebaseAuth';
  * Récupère les détails d'un shopper connecté via Firebase
  * Utilise le backend mirror-api avec authentification Firebase
  * @param {Object} user - Utilisateur Firebase (optionnel, utilise getCurrentUser si non fourni)
- * @returns {Promise<Object|null>} - Les données du shopper ou null si non trouvé
+ * @param {boolean} mapData - Si true, mappe les données de la DB vers le format app (défaut: true)
+ * @returns {Promise<Object|null>} - Les données du shopper (mappées ou brutes) ou null si non trouvé
  */
-export const getShopperDetails = async (user = null) => {
+export const getShopperDetails = async (user = null, mapData = true) => {
   try {
     const firebaseUser = user || getCurrentUser();
     if (!firebaseUser) {
@@ -51,8 +53,35 @@ export const getShopperDetails = async (user = null) => {
       throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json();
-    return data;
+    const rawData = await response.json();
+
+    // Log de TOUTES les données pour voir la structure exacte
+    console.log('🔍 Réponse complète de l\'API:', rawData);
+
+    console.log('📊 Données brutes du shopper:', {
+      gender_id: rawData.gender_id,
+      size_cm: rawData.size_cm,
+      weight_kg: rawData.weight_kg,
+      regular_pants_size_id: rawData.regular_pants_size_id,
+      regular_top_size_id: rawData.regular_top_size_id,
+      avatar_path: rawData.avatar_path,
+    });
+
+    // Mapper les données si demandé
+    if (mapData) {
+      const mappedData = mapShopperDataFromDB(rawData);
+      console.log('✅ Données mappées du shopper:', {
+        gender: mappedData.gender,
+        height: mappedData.height,
+        weight: mappedData.weight,
+        sizeBottom: mappedData.sizeBottom,
+        sizeTop: mappedData.sizeTop,
+        avatar_path: mappedData.avatar_path,
+      });
+      return mappedData;
+    }
+
+    return rawData;
   } catch (error) {
     console.error('Erreur lors de la récupération du shopper:', error);
     throw error;
@@ -61,21 +90,53 @@ export const getShopperDetails = async (user = null) => {
 
 /**
  * Crée un nouveau shopper dans la base de données
- * Format PostgREST : POST /shoppers avec Prefer: return=representation
+ * Accepte les données au format application ou au format DB
  * @param {Object} shopperData - Les données du shopper à créer
  * @param {string} shopperData.firebase_id - UID Firebase (requis)
  * @param {string} shopperData.nickname - Pseudo (requis)
  * @param {string} shopperData.first_name - Prénom (requis)
  * @param {string} shopperData.number_phone - Numéro de téléphone (requis)
  * @param {string} shopperData.email - Email (requis)
- * @param {number} shopperData.gender_id - ID du genre (optionnel)
- * @param {number} shopperData.size_cm - Taille en cm (optionnel)
- * @param {number} shopperData.weight_kg - Poids en kg (optionnel)
+ *
+ * Format application (sera mappé automatiquement):
+ * @param {string} shopperData.gender - Genre ('homme', 'femme', etc.)
+ * @param {number} shopperData.height - Taille en cm
+ * @param {number} shopperData.weight - Poids en kg
+ * @param {string} shopperData.sizeTop - Taille haut ('S', 'M', 'L', etc.)
+ * @param {string} shopperData.sizeBottom - Taille pantalon ('S', 'M', 'L', etc.)
+ *
+ * OU format DB (envoyé directement):
+ * @param {number} shopperData.gender_id - ID du genre
+ * @param {number} shopperData.size_cm - Taille en cm
+ * @param {number} shopperData.weight_kg - Poids en kg
+ * @param {number} shopperData.regular_top_size_id - ID taille haut
+ * @param {number} shopperData.regular_pants_size_id - ID taille pantalon
+ *
  * @param {string} shopperData.selfie_path - Chemin du selfie (optionnel)
+ * @param {boolean} autoMap - Si true, mappe les données app vers DB (défaut: true)
  * @returns {Promise<Object>} - Les données du shopper créé
  */
-export const createShopper = async (shopperData) => {
+export const createShopper = async (shopperData, autoMap = true) => {
   try {
+    let dataToSend = shopperData;
+
+    // Si autoMap est activé et les données sont au format application
+    if (autoMap && shopperData.gender && !shopperData.gender_id) {
+      console.log('🔄 Mapping des données app vers DB...');
+      const mappedData = mapUserDataToDB(shopperData);
+      dataToSend = {
+        ...shopperData, // Garder les champs non mappés (firebase_id, nickname, etc.)
+        ...mappedData,  // Remplacer par les champs mappés
+      };
+      console.log('✅ Données mappées pour création:', {
+        gender_id: dataToSend.gender_id,
+        size_cm: dataToSend.size_cm,
+        weight_kg: dataToSend.weight_kg,
+        regular_top_size_id: dataToSend.regular_top_size_id,
+        regular_pants_size_id: dataToSend.regular_pants_size_id,
+      });
+    }
+
     const url = `${MIRROR_API_CONFIG.BASE_URL}/api/shopper/create`;
 
     const response = await fetch(url, {
@@ -84,7 +145,7 @@ export const createShopper = async (shopperData) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(shopperData),
+      body: JSON.stringify(dataToSend),
     });
 
     if (!response.ok) {

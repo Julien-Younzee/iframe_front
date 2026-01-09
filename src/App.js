@@ -79,45 +79,73 @@ function App() {
     setIsAuthenticated(true);
 
     try {
-      // Récupérer l'avatar depuis PostgreSQL et le convertir en base64
+      // Récupérer les données du shopper depuis PostgreSQL (avec mapping automatique)
       let avatarUrl = '';
       let avatarBase64 = '';
+      let shopperData = null;
 
       try {
         // Passer explicitement l'utilisateur Firebase pour éviter les problèmes de timing
-        const shopperData = await getShopperDetails(authUser);
-        if (shopperData && shopperData.avatar_path) {
-          avatarUrl = shopperData.avatar_path;
-          console.log('Avatar récupéré depuis mirror-api:', avatarUrl);
+        // mapData=true par défaut pour obtenir les données au format application
+        shopperData = await getShopperDetails(authUser, true);
 
-          // Convertir l'image en base64 pour l'API VTO
-          try {
-            avatarBase64 = await convertAvatarToBase64(avatarUrl);
-            console.log('Avatar converti en base64');
-          } catch (conversionError) {
-            console.warn('Impossible de convertir l\'avatar en base64:', conversionError);
+        if (shopperData) {
+          console.log('✅ Shopper récupéré avec données mappées:', {
+            gender: shopperData.gender,
+            height: shopperData.height,
+            weight: shopperData.weight,
+            sizeTop: shopperData.sizeTop,
+            sizeBottom: shopperData.sizeBottom,
+            hasAvatar: !!shopperData.avatar_path,
+          });
+
+          // Récupérer l'avatar si disponible
+          if (shopperData.avatar_path) {
+            avatarUrl = shopperData.avatar_path;
+            console.log('Avatar récupéré depuis mirror-api:', avatarUrl);
+
+            // Convertir l'image en base64 pour l'API VTO
+            try {
+              avatarBase64 = await convertAvatarToBase64(avatarUrl);
+              console.log('Avatar converti en base64');
+            } catch (conversionError) {
+              console.warn('Impossible de convertir l\'avatar en base64:', conversionError);
+            }
           }
         }
       } catch (apiError) {
-        console.warn('Impossible de récupérer l\'avatar depuis mirror-api:', apiError);
+        console.warn('Impossible de récupérer le shopper depuis mirror-api:', apiError);
       }
 
-      // Si un shopper existe avec avatar, aller directement aux résultats
-      if (avatarUrl) {
-        // Utilisateur existant avec avatar - aller directement aux résultats
+      // Si un shopper existe avec avatar et données complètes, aller directement aux résultats
+      if (avatarUrl && shopperData) {
+        // Utilisateur existant avec avatar et données - aller directement aux résultats
         setUserData((prev) => ({
           ...prev,
+          // Données d'avatar
           avatarUrl: avatarUrl,
           avatarBase64: avatarBase64,
+          // Données mappées du shopper (pour la recommandation de taille)
+          gender: shopperData.gender || prev.gender,
+          height: shopperData.height || prev.height,
+          weight: shopperData.weight || prev.weight,
+          sizeTop: shopperData.sizeTop || prev.sizeTop,
+          sizeBottom: shopperData.sizeBottom || prev.sizeBottom,
         }));
         setCurrentSlide(4);
-      } else {
-        // Nouveau shopper ou shopper sans avatar - continuer le flux normal
+      } else if (shopperData && !avatarUrl) {
+        // Shopper existe mais sans avatar - pré-remplir les données et continuer le flux
         setUserData((prev) => ({
           ...prev,
-          avatarUrl: avatarUrl,
-          avatarBase64: avatarBase64,
+          gender: shopperData.gender || prev.gender,
+          height: shopperData.height || prev.height,
+          weight: shopperData.weight || prev.weight,
+          sizeTop: shopperData.sizeTop || prev.sizeTop,
+          sizeBottom: shopperData.sizeBottom || prev.sizeBottom,
         }));
+        setCurrentSlide(1);
+      } else {
+        // Nouveau shopper ou erreur - continuer le flux normal
         setCurrentSlide(1);
       }
     } catch (error) {

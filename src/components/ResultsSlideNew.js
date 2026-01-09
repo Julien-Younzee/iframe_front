@@ -36,16 +36,28 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
 
     try {
       // TODO: Appel au backend de recommandation de taille
-      // Pour l'instant, utilisation de données mock
-      console.log('🚀 Appel du backend de recommandation de taille...');
+      // Pour l'instant, utilisation de l'algorithme mock amélioré
+      console.log('🚀 Génération de la recommandation de taille intelligente...', {
+        gender: userData.gender,
+        height: userData.height,
+        weight: userData.weight,
+        sizeTop: userData.sizeTop,
+        sizeBottom: userData.sizeBottom,
+      });
 
       // Simuler un délai réseau
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const mockRecommendations = generateMockSizeRecommendations(userData.sizeTop);
+      // Passer l'objet userData complet pour utiliser l'algorithme intelligent
+      const mockRecommendations = generateMockSizeRecommendations(userData);
       setSizeRecommendation(mockRecommendations);
 
-      console.log('✅ Recommandation de taille reçue');
+      console.log('✅ Recommandation de taille générée:', mockRecommendations);
+
+      // Log des métadonnées pour debug
+      if (mockRecommendations.metadata) {
+        console.log('📊 Métadonnées de recommandation:', mockRecommendations.metadata);
+      }
     } catch (err) {
       console.error('❌ Erreur lors de la recommandation de taille:', err);
       setErrorSizeReco(
