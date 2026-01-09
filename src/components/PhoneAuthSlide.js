@@ -306,19 +306,19 @@ function PhoneAuthSlide({ onNext, onSkip }) {
 
               <div className="navigation-buttons">
                 <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading || verificationCode.length !== 6}
+                >
+                  {loading ? 'Vérification...' : 'Valider'}
+                </button>
+                <button
                   type="button"
                   onClick={handleBackToPhone}
                   className="btn btn-secondary"
                   disabled={loading}
                 >
                   Modifier le numéro
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading || verificationCode.length !== 6}
-                >
-                  {loading ? 'Vérification...' : 'Valider'}
                 </button>
               </div>
             </form>

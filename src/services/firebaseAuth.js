@@ -35,16 +35,17 @@ try {
 /**
  * Configure le reCAPTCHA invisible pour la vérification du téléphone
  * @param {string} containerId - ID du conteneur pour le reCAPTCHA
+ * @param {boolean} invisible - Mode invisible (par défaut: true)
  * @returns {RecaptchaVerifier}
  */
-export const setupRecaptcha = (containerId = 'recaptcha-container') => {
+export const setupRecaptcha = (containerId = 'recaptcha-container', invisible = true) => {
   if (!auth) {
     throw new Error('Firebase Auth n\'est pas initialisé');
   }
 
   try {
     const recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'normal',
+      size: invisible ? 'invisible' : 'normal',
       callback: (response) => {
         console.log('reCAPTCHA résolu', response);
       },

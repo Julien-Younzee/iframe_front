@@ -142,6 +142,7 @@
 
 /* Section Ajouter au panier */
 .add-to-cart-section {
+  margin-top: 1.5rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: center;

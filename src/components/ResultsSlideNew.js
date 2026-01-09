@@ -113,7 +113,8 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
   };
 
   const handleSaveAccount = (data) => {
-    setShowSavePrompt(false);
+    // Ne pas cacher le prompt, le composant SaveAccountPrompt gérera l'affichage du succès
+    // setShowSavePrompt(false);
     if (onSaveAccount) {
       onSaveAccount(data);
     }

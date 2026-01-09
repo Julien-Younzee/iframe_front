@@ -8,6 +8,7 @@ import ResultsSlideNew from './components/ResultsSlideNew';
 import { clearUserCache } from './services/cacheService';
 import { getShopperDetails, convertImageUrlToBase64 as convertAvatarToBase64, createShopper } from './services/shopperService';
 import { convertImageUrlToBase64 as convertClothingImageToBase64 } from './services/imageService';
+import logo from './assets/logo.png';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -283,12 +284,12 @@ function App() {
           <div className="footer-content">
             <div className="footer-branding">
               <span className="footer-powered">powered by</span>
-              <div className="footer-logo-placeholder">[LOGO]</div>
+              <img src={logo} alt="Younzee" className="footer-logo" />
               <span className="footer-brand-name">Younzee</span>
             </div>
             <p className="footer-privacy">
               En continuant, vous acceptez notre{' '}
-              <a href="#" className="footer-link">politique de confidentialité</a>
+              <a href="https://www.younzee.com/privacy" target="_blank" rel="noopener noreferrer" className="footer-link">politique de confidentialité</a>
             </p>
           </div>
         </div>

@@ -7,8 +7,8 @@ import {
 import './SaveAccountPrompt.css';
 
 // Liens des applications mobiles - À remplacer par les vrais liens
-const APP_STORE_URL = 'https://apps.apple.com/app/younzee/YOUR_APP_ID';
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.younzee.app';
+const APP_STORE_URL = 'https://apps.apple.com/app/younzee/6755129372';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.anonymous.Younzeeappp';
 
 function SaveAccountPrompt({ userData, onSave }) {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -69,7 +69,7 @@ function SaveAccountPrompt({ userData, onSave }) {
 
       console.log('📞 Numéro formaté pour Firebase (save account):', fullPhoneNumber);
 
-      const recaptchaVerifier = setupRecaptcha('recaptcha-container-save');
+      const recaptchaVerifier = setupRecaptcha('recaptcha-container-save', true);
       const result = await sendVerificationCode(fullPhoneNumber, recaptchaVerifier);
 
       setConfirmationResult(result);
@@ -248,19 +248,19 @@ function SaveAccountPrompt({ userData, onSave }) {
 
           <div className="prompt-actions">
             <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading || verificationCode.length !== 6}
+            >
+              {loading ? 'Vérification...' : 'Valider'}
+            </button>
+            <button
               type="button"
               onClick={() => setStep('phone')}
               className="btn btn-secondary"
               disabled={loading}
             >
               Modifier
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading || verificationCode.length !== 6}
-            >
-              {loading ? 'Vérification...' : 'Valider'}
             </button>
           </div>
         </form>
