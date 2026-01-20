@@ -25,6 +25,7 @@ function App() {
     clothingImageBase64: '', // Image du vêtement en base64 pour VTO
     avatarUrl: '', // URL de l'avatar depuis PostgreSQL
     avatarBase64: '', // Avatar en base64 pour l'API VTO
+    isOneSize: false, // True si le produit est en taille unique
   });
 
   // Détection du vêtement depuis la page parente
@@ -33,7 +34,22 @@ function App() {
       try {
         if (event.data.type === 'CLOTHING_ITEM_DATA') {
           const clothingItem = event.data.item;
-          setUserData((prev) => ({ ...prev, clothingItem }));
+
+          // Détection automatique de taille unique :
+          // 1. Flag explicite isOneSize envoyé par la page parente
+          // 2. OU variant.title contient des mots-clés de taille unique
+          const oneSizeKeywords = ['taille unique', 'tu', 'one size', 'os', 'unique size', 'onesize'];
+          const variantTitle = (clothingItem?.variant?.title || '').toLowerCase().trim();
+          const isOneSizeFromVariant = oneSizeKeywords.some(keyword =>
+            variantTitle === keyword || variantTitle.includes(keyword)
+          );
+          const isOneSize = clothingItem?.isOneSize || isOneSizeFromVariant;
+
+          if (isOneSize) {
+            console.log('📏 Produit détecté comme taille unique:', variantTitle || 'flag isOneSize');
+          }
+
+          setUserData((prev) => ({ ...prev, clothingItem, isOneSize }));
 
           // Convertir l'image du vêtement en base64 si une URL est fournie
           if (clothingItem?.imageUrl) {
@@ -262,6 +278,7 @@ function App() {
                 clothingImageBase64: prev.clothingImageBase64, // Conserver l'image base64
                 avatarUrl: '',
                 avatarBase64: '',
+                isOneSize: prev.isOneSize, // Conserver l'info taille unique
               }));
             }}
           />

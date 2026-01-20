@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemple Page Produit TAILLE UNIQUE - Younzee VTO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9f9f9;
+        }
+
+        /* Header simulé */
+        .fake-header {
+            background: #fff;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fake-logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .fake-nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .fake-nav a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        /* Page produit */
+        .product-page {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+        }
+
+        /* Galerie images */
+        .product-images {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .main-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnails {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .thumbnail {
+            aspect-ratio: 1;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .thumbnail:hover {
+            border-color: #000;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Informations produit */
+        .product-info h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #000;
+        }
+
+        .product-vendor {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #000;
+        }
+
+        .product-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Badge Taille Unique */
+        .onesize-badge {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Sélecteur de taille (désactivé pour taille unique) */
+        .size-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .size-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #000;
+        }
+
+        .size-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .size-option {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .size-option:hover {
+            border-color: #000;
+        }
+
+        .size-option.selected {
+            border-color: #22c55e;
+            background: #22c55e;
+            color: white;
+        }
+
+        /* Bouton "Ajouter au panier" classique */
+        .add-to-cart-classic {
+            width: 100%;
+            padding: 1rem;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        /* ========== YOUNZEE CTA ========== */
+        .younzee-cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            margin: 16px 0;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .younzee-cta-button:hover {
+            background: #333333;
+            border-color: #333333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .younzee-cta-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .younzee-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .younzee-badge strong {
+            color: #000;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 2rem 0;
+        }
+
+        /* Container iframe */
+        .younzee-iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .younzee-iframe-container.active {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .younzee-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Annotation */
+        .annotation {
+            background: #d1fae5;
+            border-left: 4px solid #22c55e;
+            padding: 1rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+
+        .annotation strong {
+            color: #166534;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .product-page {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .fake-nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header simulé -->
+    <div class="fake-header">
+        <div class="fake-logo">MA BOUTIQUE</div>
+        <nav class="fake-nav">
+            <a href="#">Nouveautés</a>
+            <a href="#">Vêtements</a>
+            <a href="#">Accessoires</a>
+            <a href="#">Panier (0)</a>
+        </nav>
+    </div>
+
+    <!-- Annotation -->
+    <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
+        <div class="annotation">
+            <strong>📌 Test TAILLE UNIQUE - Younzee VTO</strong><br>
+            Cette page simule un produit en <strong>taille unique</strong>.
+            Cliquez sur "Essayer virtuellement" : l'iframe affichera directement "Taille unique"
+            sans proposer les 3 options de taille (Ajustée, Idéale, Ample).
+        </div>
+    </div>
+
+    <!-- Page produit -->
+    <div class="product-page">
+        <!-- Galerie images -->
+        <div class="product-images">
+            <div class="main-image">
+                <img id="main-product-image" src="pull_5.jpg" alt="Écharpe en laine">
+            </div>
+            <div class="thumbnails">
+                <div class="thumbnail">
+                    <img src="pull_5.jpg" alt="Écharpe vue 1" onclick="changeMainImage('pull_5.jpg')">
+                </div>
+                <div class="thumbnail">
+                    <img src="short_3.jpg" alt="Écharpe vue 2" onclick="changeMainImage('short_3.jpg')">
+                </div>
+                <div class="thumbnail">
+                    <img src="short_3.jpg" alt="Écharpe vue 3" onclick="changeMainImage('short_3.jpg')">
+                </div>
+                <div class="thumbnail">
+                    <img src="short_3.jpg" alt="Écharpe vue 4" onclick="changeMainImage('short_3.jpg')">
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations produit -->
+        <div class="product-info">
+            <div class="product-vendor">LACOSTE</div>
+            <h1>Écharpe en Laine Mérinos</h1>
+            <div class="product-price">89,99 €</div>
+
+            <!-- Badge Taille Unique -->
+            <div class="onesize-badge">TAILLE UNIQUE</div>
+
+            <div class="product-description">
+                Écharpe douce et chaude en laine mérinos premium.
+                Dimensions généreuses (200cm x 35cm) pour s'adapter à toutes les morphologies.
+                Logo Lacoste brodé discret. Fabriquée de manière éthique en Italie.
+            </div>
+
+            <!-- Sélecteur de taille (taille unique) -->
+            <div class="size-selector">
+                <label>Taille</label>
+                <div class="size-options">
+                    <button class="size-option selected">Taille unique</button>
+                </div>
+            </div>
+
+            <!-- Bouton "Ajouter au panier" classique -->
+            <button class="add-to-cart-classic">Ajouter au panier</button>
+
+            <div class="divider"></div>
+
+            <!-- ========== BOUTON YOUNZEE ========== -->
+            <div class="younzee-cta-wrapper">
+                <button
+                    id="younzee-open-button"
+                    class="younzee-cta-button"
+                    type="button"
+                    aria-label="Essayer virtuellement avec Younzee"
+                >
+                    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                    Essayer virtuellement
+                </button>
+
+                <div class="younzee-badge">
+                    powered by <strong>Younzee</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container de l'iframe Younzee -->
+    <div id="younzee-iframe-container" class="younzee-iframe-container">
+        <iframe
+            id="younzee-iframe"
+            src="http://localhost:3000"
+            allow="camera"
+            title="Younzee Virtual Try-On"
+            loading="lazy"
+        ></iframe>
+    </div>
+
+    <!-- Script -->
+    <script>
+    (function() {
+        'use strict';
+
+        const YOUNZEE_IFRAME_ORIGIN = 'http://localhost:3000';
+        const iframeContainer = document.getElementById('younzee-iframe-container');
+        const iframe = document.getElementById('younzee-iframe');
+        const openButton = document.getElementById('younzee-open-button');
+
+        // Fonction pour changer l'image principale
+        window.changeMainImage = function(imageSrc) {
+            const mainImage = document.getElementById('main-product-image');
+            mainImage.src = imageSrc;
+        };
+
+        // Données du produit - TAILLE UNIQUE
+        const productData = {
+            id: 'SCARF-LACOSTE-001',
+            name: 'Écharpe en Laine Mérinos',
+            vendor: 'LACOSTE',
+            imageUrl: 'http://localhost:3000/pull_5.jpg',
+            price: '89.99',
+            category: 'accessory',
+            // ========== FLAG TAILLE UNIQUE ==========
+            isOneSize: true,
+        };
+
+        // Ouvrir l'iframe
+        function openYounzee() {
+            iframeContainer.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            iframe.contentWindow.postMessage({
+                type: 'OPEN_YOUNZEE'
+            }, YOUNZEE_IFRAME_ORIGIN);
+        }
+
+        // Fermer l'iframe
+        function closeYounzee() {
+            iframeContainer.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Bouton
+        if (openButton) {
+            openButton.addEventListener('click', function() {
+                console.log('🎯 Ouverture de Younzee VTO (Taille Unique)');
+                openYounzee();
+            });
+        }
+
+        // Messages
+        window.addEventListener('message', function(event) {
+            if (event.origin !== YOUNZEE_IFRAME_ORIGIN) return;
+
+            console.log('📩 Message:', event.data.type);
+
+            if (event.data.type === 'REQUEST_CLOTHING_ITEM') {
+                iframe.contentWindow.postMessage({
+                    type: 'CLOTHING_ITEM_DATA',
+                    item: productData
+                }, YOUNZEE_IFRAME_ORIGIN);
+                console.log('✅ Données envoyées (isOneSize: true)');
+            }
+
+            if (event.data.type === 'ADD_TO_CART') {
+                const { size, fitType } = event.data;
+
+                // Pour taille unique, fitType sera "onesize"
+                if (fitType === 'onesize') {
+                    alert(`✅ Produit ajouté au panier!\n\n${productData.name}\nTaille unique`);
+                } else {
+                    alert(`✅ Produit ajouté au panier!\n\nTaille: ${size}\nCoupe: ${fitType}`);
+                }
+                closeYounzee();
+            }
+
+            if (event.data.type === 'YOUNZEE_CLOSED') {
+                closeYounzee();
+            }
+        });
+
+        // Échap pour fermer
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && iframeContainer.classList.contains('active')) {
+                closeYounzee();
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

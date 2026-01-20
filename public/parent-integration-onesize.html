@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemple Taille Unique - Younzee</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .product-page {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .product-image {
+            flex: 1;
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+        }
+        .product-info {
+            flex: 1;
+        }
+        .badge-onesize {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .iframe-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exemple de produit TAILLE UNIQUE avec Younzee</h1>
+
+    <div class="product-page">
+        <div class="product-image">
+            <h2>Image du vêtement</h2>
+            <p>Écharpe en laine</p>
+            <p>Référence: SCARF-001</p>
+        </div>
+        <div class="product-info">
+            <span class="badge-onesize">TAILLE UNIQUE</span>
+            <h2>Écharpe en laine mérinos</h2>
+            <p>Une écharpe douce et chaude en laine mérinos, parfaite pour l'hiver.</p>
+            <p><strong>Prix: 49.99€</strong></p>
+            <p><em>Ce produit est disponible en taille unique.</em></p>
+            <button>Ajouter au panier</button>
+        </div>
+    </div>
+
+    <h2>Essayez virtuellement</h2>
+    <div class="iframe-container">
+        <!-- Intégration de l'iframe Younzee -->
+        <iframe
+            id="younzee-iframe"
+            src="http://localhost:3000"
+            allow="camera"
+            title="Younzee Virtual Try-On"
+        ></iframe>
+    </div>
+
+    <script>
+        // Configuration
+        const YOUNZEE_IFRAME_ORIGIN = 'http://localhost:3000';
+
+        // Exemple de données de vêtement en TAILLE UNIQUE
+        const clothingItemData = {
+            id: 'SCARF-001',
+            name: 'Écharpe en laine mérinos',
+            category: 'accessory',
+            color: 'beige',
+            // IMPORTANT: isOneSize = true pour indiquer que c'est une taille unique
+            isOneSize: true,
+            // URL de l'image du vêtement
+            imageUrl: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=800',
+        };
+
+        // Écouter les messages de l'iframe
+        window.addEventListener('message', function(event) {
+            console.log('📩 Message reçu de l\'iframe:', event.data);
+
+            // L'iframe demande les informations du vêtement
+            if (event.data.type === 'REQUEST_CLOTHING_ITEM') {
+                console.log('🔍 L\'iframe demande les infos du vêtement');
+                const iframe = document.getElementById('younzee-iframe');
+
+                iframe.contentWindow.postMessage({
+                    type: 'CLOTHING_ITEM_DATA',
+                    item: clothingItemData
+                }, '*');
+
+                console.log('✅ Données du vêtement envoyées (isOneSize: true)');
+            }
+
+            // L'utilisateur veut ajouter au panier depuis l'iframe
+            if (event.data.type === 'ADD_TO_CART') {
+                console.log('🛒 Ajout au panier demandé:', event.data);
+                const { size, fitType } = event.data;
+
+                // Pour une taille unique, size = "Taille unique" et fitType = "onesize"
+                addToCart(clothingItemData.id, size, fitType);
+            }
+
+            // L'iframe a été fermée
+            if (event.data.type === 'YOUNZEE_CLOSED') {
+                console.log('❌ L\'iframe Younzee a été fermée');
+            }
+        });
+
+        // Fonction d'ajout au panier
+        function addToCart(productId, size, fitType) {
+            console.log(`🛒 Ajout au panier: Produit ${productId}, Taille ${size}, Coupe ${fitType}`);
+
+            if (fitType === 'onesize') {
+                alert(`✅ Ajouté au panier: ${clothingItemData.name} (Taille unique)`);
+            } else {
+                alert(`✅ Ajouté au panier: Taille ${size} (${fitType})`);
+            }
+        }
+
+        // Fonction pour ouvrir/fermer l'iframe manuellement
+        function toggleYounzee(open) {
+            const iframe = document.getElementById('younzee-iframe');
+            iframe.contentWindow.postMessage({
+                type: open ? 'OPEN_YOUNZEE' : 'CLOSE_YOUNZEE'
+            }, '*');
+        }
+    </script>
+</body>
+</html>

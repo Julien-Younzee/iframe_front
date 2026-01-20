@@ -107,6 +107,29 @@
   border-color: #16a34a;
 }
 
+/* Style spécial pour Taille Unique */
+.size-options.one-size {
+  justify-content: center;
+}
+
+.size-option.one-size-option {
+  flex: 0 0 auto;
+  min-width: 140px;
+  cursor: default;
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.size-option.one-size-option .size-label,
+.size-option.one-size-option .size-value {
+  color: #ffffff;
+}
+
+.size-option.one-size-option:hover {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
 .size-label {
   font-size: 0.525rem;
   font-weight: 500;

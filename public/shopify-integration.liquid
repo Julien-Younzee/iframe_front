@@ -124,6 +124,57 @@ Instructions d'installation:
   // Données du produit Shopify actuel
   function getCurrentProductData() {
     {% if product %}
+    {% comment %}
+    Détection "Taille unique" :
+    - Un produit est considéré comme "taille unique" si :
+      1. Il n'a qu'une seule variante (has_only_default_variant)
+      2. OU s'il n'a pas d'option "Size"/"Taille" dans ses variantes
+      3. OU si toutes ses variantes ont la même taille (ex: "TU", "Taille unique", "One Size")
+    {% endcomment %}
+    {% assign is_one_size = false %}
+    {% assign one_size_keywords = 'taille unique,tu,one size,os,unique,u' | split: ',' %}
+
+    {% comment %} Cas 1: Produit sans variantes (has_only_default_variant) {% endcomment %}
+    {% if product.has_only_default_variant %}
+      {% assign is_one_size = true %}
+    {% else %}
+      {% comment %} Cas 2: Vérifier si l'option "Size" existe {% endcomment %}
+      {% assign has_size_option = false %}
+      {% for option in product.options %}
+        {% assign option_lower = option | downcase %}
+        {% if option_lower == 'size' or option_lower == 'taille' %}
+          {% assign has_size_option = true %}
+          {% assign size_option_index = forloop.index0 %}
+        {% endif %}
+      {% endfor %}
+
+      {% if has_size_option == false %}
+        {% comment %} Pas d'option taille = taille unique {% endcomment %}
+        {% assign is_one_size = true %}
+      {% else %}
+        {% comment %} Cas 3: Vérifier si toutes les tailles sont des mots-clés "taille unique" {% endcomment %}
+        {% assign all_sizes_are_one_size = true %}
+        {% for variant in product.variants %}
+          {% assign variant_size = variant.options[size_option_index] | downcase | strip %}
+          {% assign size_is_one_size = false %}
+          {% for keyword in one_size_keywords %}
+            {% assign keyword_clean = keyword | strip %}
+            {% if variant_size == keyword_clean %}
+              {% assign size_is_one_size = true %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+          {% unless size_is_one_size %}
+            {% assign all_sizes_are_one_size = false %}
+            {% break %}
+          {% endunless %}
+        {% endfor %}
+        {% if all_sizes_are_one_size %}
+          {% assign is_one_size = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
     return {
       id: '{{ product.id }}',
       handle: '{{ product.handle }}',
@@ -141,6 +192,9 @@ Instructions d'installation:
         price: '{{ product.selected_or_first_available_variant.price | money_without_currency }}',
         available: {{ product.selected_or_first_available_variant.available | json }},
       },
+
+      // Taille unique : true si le produit n'a pas de variantes de taille
+      isOneSize: {{ is_one_size | json }},
 
       // Métadonnées utiles
       tags: {{ product.tags | json }},

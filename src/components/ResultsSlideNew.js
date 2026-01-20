@@ -35,6 +35,22 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
     setErrorSizeReco('');
 
     try {
+      // Si le produit est en taille unique, pas de calcul nécessaire
+      if (userData.isOneSize) {
+        console.log('📏 Produit en taille unique - pas de calcul de recommandation');
+        setSizeRecommendation({
+          isOneSize: true,
+          oneSize: {
+            size: 'Taille unique',
+            type: 'onesize',
+            label: 'Taille unique',
+            description: 'Ce produit est disponible en taille unique, adaptée à toutes les morphologies.',
+          },
+        });
+        setIsLoadingSizeReco(false);
+        return;
+      }
+
       // TODO: Appel au backend de recommandation de taille
       // Pour l'instant, utilisation de l'algorithme mock amélioré
       console.log('🚀 Génération de la recommandation de taille intelligente...', {
@@ -139,6 +155,16 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
   // };
 
   const handleAddToCart = () => {
+    // Gestion du cas taille unique
+    if (sizeRecommendation?.isOneSize) {
+      window.parent.postMessage({
+        type: 'ADD_TO_CART',
+        size: 'Taille unique',
+        fitType: 'onesize'
+      }, '*');
+      return;
+    }
+
     const selectedSize = sizeRecommendation[selectedFitType].size;
     // Envoyer un message à la page parente avec la taille sélectionnée
     window.parent.postMessage({
@@ -148,7 +174,10 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
     }, '*');
   };
 
-  const currentRecommendation = sizeRecommendation ? sizeRecommendation[selectedFitType] : null;
+  // Pour taille unique, utiliser oneSize, sinon utiliser le type sélectionné
+  const currentRecommendation = sizeRecommendation
+    ? (sizeRecommendation.isOneSize ? sizeRecommendation.oneSize : sizeRecommendation[selectedFitType])
+    : null;
 
   return (
     <div className="slide results-slide-new">
@@ -172,32 +201,44 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
             </div>
           ) : sizeRecommendation ? (
             <>
-              <div className="size-options">
-                <button
-                  className={`size-option ${selectedFitType === 'fit' ? 'active' : ''}`}
-                  onClick={() => setSelectedFitType('fit')}
-                  data-type="fit"
-                >
-                  <span className="size-label">{sizeRecommendation.fit.label}</span>
-                  <span className="size-value">{sizeRecommendation.fit.size}</span>
-                </button>
-                <button
-                  className={`size-option ${selectedFitType === 'ideal' ? 'active' : ''}`}
-                  onClick={() => setSelectedFitType('ideal')}
-                  data-type="ideal"
-                >
-                  <span className="size-label">{sizeRecommendation.ideal.label}</span>
-                  <span className="size-value">{sizeRecommendation.ideal.size}</span>
-                </button>
-                <button
-                  className={`size-option ${selectedFitType === 'oversize' ? 'active' : ''}`}
-                  onClick={() => setSelectedFitType('oversize')}
-                  data-type="oversize"
-                >
-                  <span className="size-label">{sizeRecommendation.oversize.label}</span>
-                  <span className="size-value">{sizeRecommendation.oversize.size}</span>
-                </button>
-              </div>
+              {/* Affichage différent selon taille unique ou tailles multiples */}
+              {sizeRecommendation.isOneSize ? (
+                /* Cas Taille Unique */
+                <div className="size-options one-size">
+                  <div className="size-option active one-size-option" data-type="onesize">
+                    <span className="size-label">{sizeRecommendation.oneSize.label}</span>
+                    <span className="size-value">TU</span>
+                  </div>
+                </div>
+              ) : (
+                /* Cas Tailles Multiples */
+                <div className="size-options">
+                  <button
+                    className={`size-option ${selectedFitType === 'fit' ? 'active' : ''}`}
+                    onClick={() => setSelectedFitType('fit')}
+                    data-type="fit"
+                  >
+                    <span className="size-label">{sizeRecommendation.fit.label}</span>
+                    <span className="size-value">{sizeRecommendation.fit.size}</span>
+                  </button>
+                  <button
+                    className={`size-option ${selectedFitType === 'ideal' ? 'active' : ''}`}
+                    onClick={() => setSelectedFitType('ideal')}
+                    data-type="ideal"
+                  >
+                    <span className="size-label">{sizeRecommendation.ideal.label}</span>
+                    <span className="size-value">{sizeRecommendation.ideal.size}</span>
+                  </button>
+                  <button
+                    className={`size-option ${selectedFitType === 'oversize' ? 'active' : ''}`}
+                    onClick={() => setSelectedFitType('oversize')}
+                    data-type="oversize"
+                  >
+                    <span className="size-label">{sizeRecommendation.oversize.label}</span>
+                    <span className="size-value">{sizeRecommendation.oversize.size}</span>
+                  </button>
+                </div>
+              )}
 
               <div className="recommendation-card">
                 <p className="recommendation-text">
