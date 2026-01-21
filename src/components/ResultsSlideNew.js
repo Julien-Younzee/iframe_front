@@ -165,14 +165,53 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
 
     const targetSize = (size || '').toLowerCase().trim();
 
-    // Chercher la variante correspondant à la taille (correspondance exacte uniquement)
+    // Chercher la variante correspondant à la taille
+    // Les variantes Shopify peuvent avoir des formats comme:
+    // - "S", "M", "L" (simple)
+    // - "Blanc écru / S", "Blanc écru / M" (couleur / taille)
+    // - "S / Rouge", "M / Rouge" (taille / couleur)
     const variant = userData.variants.find(v => {
-      const variantSize = (v.size || '').toLowerCase().trim();
-      return variantSize === targetSize;
+      const variantTitle = (v.size || '').toLowerCase().trim();
+
+      // 1. Correspondance exacte
+      if (variantTitle === targetSize) {
+        return true;
+      }
+
+      // 2. Vérifier si le titre contient la taille après un séparateur "/ " ou " /"
+      // Ex: "Blanc écru / S" contient "/ s" ou "Blanc écru /S"
+      const separatorPatterns = [
+        `/ ${targetSize}`,      // "/ S" à la fin
+        `/${targetSize}`,       // "/S" sans espace
+        `${targetSize} /`,      // "S /" au début
+        `${targetSize}/`,       // "S/" sans espace
+      ];
+
+      for (const pattern of separatorPatterns) {
+        // Vérifier que le pattern est suivi d'une fin de chaîne ou d'un espace/séparateur
+        // pour éviter que "L" ne corresponde à "XL"
+        const patternIndex = variantTitle.indexOf(pattern);
+        if (patternIndex !== -1) {
+          const afterPattern = patternIndex + pattern.length;
+          // Vérifier que c'est bien la fin ou suivi d'un séparateur
+          if (afterPattern >= variantTitle.length ||
+              variantTitle[afterPattern] === ' ' ||
+              variantTitle[afterPattern] === '/') {
+            return true;
+          }
+        }
+      }
+
+      // 3. Vérifier si la taille est un mot complet dans le titre
+      // Utiliser une regex pour trouver la taille comme mot isolé
+      // \b ne fonctionne pas bien avec les accents, donc on vérifie manuellement
+      const words = variantTitle.split(/[\s/\-,]+/);
+      return words.includes(targetSize);
     });
 
     logger.log(`🔍 Vérification taille "${size}":`, {
-      variantTrouvée: variant,
+      variants: userData.variants.map(v => v.size),
+      variantTrouvée: variant ? variant.size : null,
       disponible: variant ? variant.available : 'non trouvée = indisponible'
     });
 

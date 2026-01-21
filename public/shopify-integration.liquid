@@ -13,7 +13,7 @@ Instructions d'installation:
 {% endcomment %}
 
 {% comment %} CONFIGURATION {% endcomment %}
-{% assign younzee_iframe_url = "https://votre-domaine-younzee.netlify.app" %}
+{% assign younzee_iframe_url = "https://mon-domaine.com" %}
 {% assign younzee_enabled_on_product_page = true %}
 
 {% if template contains 'product' and younzee_enabled_on_product_page %}
@@ -27,14 +27,14 @@ Instructions d'installation:
     justify-content: center;
     margin: 12px 0;
     background: #ffde59 !important;
-    color: #000000 !important;
+    color:rgb(0, 0, 0) !important;
     border-color: #ffde59 !important;
   }
 
   .younzee-cta-button:hover {
     background: #e6c850 !important;
     border-color: #e6c850 !important;
-    color: #000000 !important;
+    color:rgb(0, 0, 0) !important;
   }
 
   .younzee-cta-button svg {
@@ -80,6 +80,7 @@ Instructions d'installation:
   }
 </style>
 
+
 <!-- Bouton CTA sur la page produit -->
 <div class="younzee-cta-wrapper">
   <button
@@ -91,13 +92,10 @@ Instructions d'installation:
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px; margin-right: 8px;">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
     </svg>
-    Essayer virtuellement
+    Essayer et trouver ma taille
   </button>
-
-  <div class="younzee-badge">
-    powered by <strong>Younzee</strong>
-  </div>
 </div>
+
 
 <!-- Container de l'iframe (caché par défaut) -->
 <div id="younzee-iframe-container" class="younzee-iframe-container">
@@ -124,7 +122,7 @@ Instructions d'installation:
   // Données du produit Shopify actuel
   function getCurrentProductData() {
     {% if product %}
-    {% comment %}
+          {% comment %}
     Détection "Taille unique" :
     - Un produit est considéré comme "taille unique" si :
       1. Il n'a qu'une seule variante (has_only_default_variant)
@@ -133,7 +131,6 @@ Instructions d'installation:
     {% endcomment %}
     {% assign is_one_size = false %}
     {% assign one_size_keywords = 'taille unique,tu,one size,os,unique,u' | split: ',' %}
-
     {% comment %} Cas 1: Produit sans variantes (has_only_default_variant) {% endcomment %}
     {% if product.has_only_default_variant %}
       {% assign is_one_size = true %}
@@ -147,7 +144,6 @@ Instructions d'installation:
           {% assign size_option_index = forloop.index0 %}
         {% endif %}
       {% endfor %}
-
       {% if has_size_option == false %}
         {% comment %} Pas d'option taille = taille unique {% endcomment %}
         {% assign is_one_size = true %}
@@ -174,7 +170,6 @@ Instructions d'installation:
         {% endif %}
       {% endif %}
     {% endif %}
-
     return {
       id: '{{ product.id }}',
       handle: '{{ product.handle }}',
@@ -192,6 +187,17 @@ Instructions d'installation:
         price: '{{ product.selected_or_first_available_variant.price | money_without_currency }}',
         available: {{ product.selected_or_first_available_variant.available | json }},
       },
+
+      // Toutes les variantes avec leur disponibilité (pour la gestion des stocks)
+      variants: [
+        {% for variant in product.variants %}
+        {
+          id: {{ variant.id | json }},
+          title: {{ variant.title | json }},
+          available: {{ variant.available | json }}
+        }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ],
 
       // Taille unique : true si le produit n'a pas de variantes de taille
       isOneSize: {{ is_one_size | json }},
@@ -348,6 +354,17 @@ Instructions d'installation:
     }, { once: true });
   }
 })();
+// Déplacer le bouton juste après les buy-buttons
+document.addEventListener('DOMContentLoaded', function() {
+  const younzeeCta = document.querySelector('.younzee-cta-wrapper');
+  const buyButtons = document.querySelector('.product-form__buttons');
+  
+  if (younzeeCta && buyButtons) {
+    // Insérer le bouton après les buy-buttons
+    buyButtons.parentNode.insertBefore(younzeeCta, buyButtons.nextSibling);
+  }
+});
+
 </script>
 
 {% endif %}
