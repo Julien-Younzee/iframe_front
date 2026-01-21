@@ -6,7 +6,7 @@ import ClothingSizesSlide from './components/ClothingSizesSlide';
 import SelfieSlide from './components/SelfieSlide';
 import ResultsSlideNew from './components/ResultsSlideNew';
 import CacheChoiceModal from './components/CacheChoiceModal';
-import { clearUserCache, getUserDataFromCache, hasCachedData, saveUserDataToCache } from './services/cacheService';
+import { clearUserCache, getUserDataFromCache, hasCachedData } from './services/cacheService';
 import { getShopperDetails, convertImageUrlToBase64 as convertAvatarToBase64, createShopper } from './services/shopperService';
 import { convertImageUrlToBase64 as convertClothingImageToBase64 } from './services/imageService';
 import logger from './services/logger';
