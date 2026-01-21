@@ -49,10 +49,19 @@ export const CAMERA_CONFIG = {
 
 /**
  * Configuration Mirror API (Backend Django pour la gestion des shoppers)
+ * @deprecated Utiliser API_MOBILE_CONFIG à la place
  */
 export const MIRROR_API_CONFIG = {
   // URL de base du backend mirror-api
   BASE_URL: process.env.REACT_APP_MIRROR_API_URL || 'https://dev-api-backend-884993723796.europe-west9.run.app',
+};
+
+/**
+ * Configuration API Mobile (Backend Django centralisé pour les shoppers)
+ */
+export const API_MOBILE_CONFIG = {
+  // URL de base du backend api-appMobile
+  BASE_URL: process.env.REACT_APP_API_MOBILE_URL || '',
 };
 
 /**

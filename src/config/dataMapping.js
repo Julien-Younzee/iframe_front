@@ -3,6 +3,8 @@
  * Ces mappings correspondent aux tables de référence PostgreSQL
  */
 
+import logger from '../services/logger';
+
 /**
  * Mapping des IDs de genre vers les valeurs textuelles
  * Table PostgreSQL: genders
@@ -130,13 +132,13 @@ export const mapShopperDataFromDB = (shopperData) => {
 
   // Validation: log un warning si des mappings sont manquants
   if (gender_id && !gender) {
-    console.warn(`⚠️ Gender ID ${gender_id} non trouvé dans GENDER_MAPPING`);
+    logger.warn(`⚠️ Gender ID ${gender_id} non trouvé dans GENDER_MAPPING`);
   }
   if (regular_pants_size_id && !sizeBottom) {
-    console.warn(`⚠️ Pants size ID ${regular_pants_size_id} non trouvé dans PANTS_SIZE_MAPPING`);
+    logger.warn(`⚠️ Pants size ID ${regular_pants_size_id} non trouvé dans PANTS_SIZE_MAPPING`);
   }
   if (regular_top_size_id && !sizeTop) {
-    console.warn(`⚠️ Top size ID ${regular_top_size_id} non trouvé dans TOP_SIZE_MAPPING`);
+    logger.warn(`⚠️ Top size ID ${regular_top_size_id} non trouvé dans TOP_SIZE_MAPPING`);
   }
 
   return {
@@ -188,13 +190,13 @@ export const mapUserDataToDB = (userData) => {
 
   // Validation: log un warning si des mappings sont manquants
   if (gender && !gender_id) {
-    console.warn(`⚠️ Genre "${gender}" non trouvé dans REVERSE_GENDER_MAPPING`);
+    logger.warn(`⚠️ Genre "${gender}" non trouvé dans REVERSE_GENDER_MAPPING`);
   }
   if (sizeBottom && !regular_pants_size_id) {
-    console.warn(`⚠️ Taille pantalon "${sizeBottom}" non trouvée dans REVERSE_PANTS_SIZE_MAPPING`);
+    logger.warn(`⚠️ Taille pantalon "${sizeBottom}" non trouvée dans REVERSE_PANTS_SIZE_MAPPING`);
   }
   if (sizeTop && !regular_top_size_id) {
-    console.warn(`⚠️ Taille haut "${sizeTop}" non trouvée dans REVERSE_TOP_SIZE_MAPPING`);
+    logger.warn(`⚠️ Taille haut "${sizeTop}" non trouvée dans REVERSE_TOP_SIZE_MAPPING`);
   }
 
   return {

@@ -5,6 +5,7 @@ import {
   verifyCodeCompat,
 } from '../services/firebaseAuthCompat';
 import './PhoneAuthSlide.css';
+import logger from '../services/logger';
 
 function PhoneAuthSlide({ onNext, onSkip }) {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -34,9 +35,9 @@ function PhoneAuthSlide({ onNext, onSkip }) {
       try {
         verifier = await createCompatRecaptchaVerifier('recaptcha-container', true);
         setRecaptchaVerifier(verifier);
-        console.log('✅ RecaptchaVerifier Compat initialisé (mode invisible)');
+        logger.log('✅ RecaptchaVerifier Compat initialisé (mode invisible)');
       } catch (error) {
-        console.error('Erreur lors de l\'initialisation du reCAPTCHA:', error);
+        logger.error('Erreur lors de l\'initialisation du reCAPTCHA:', error);
         setError('Erreur lors de l\'initialisation. Veuillez recharger la page.');
       }
     };
@@ -49,7 +50,7 @@ function PhoneAuthSlide({ onNext, onSkip }) {
         try {
           verifier.clear();
         } catch (error) {
-          console.error('Erreur lors du nettoyage du reCAPTCHA:', error);
+          logger.error('Erreur lors du nettoyage du reCAPTCHA:', error);
         }
       }
     };
@@ -104,7 +105,7 @@ function PhoneAuthSlide({ onNext, onSkip }) {
 
       const fullPhoneNumber = `${countryCode}${cleanedPhone}`;
 
-      console.log('📞 Numéro formaté pour Firebase:', fullPhoneNumber);
+      logger.log('📞 Numéro formaté pour Firebase:', fullPhoneNumber);
 
       // Envoyer le code de vérification avec le verifier existant
       const result = await sendVerificationCodeCompat(
@@ -123,14 +124,14 @@ function PhoneAuthSlide({ onNext, onSkip }) {
       // Passer à l'étape du code
       setStep('code');
     } catch (err) {
-      console.error('Erreur lors de l\'envoi du code:', err);
+      logger.error('Erreur lors de l\'envoi du code:', err);
 
       // Nettoyer et réinitialiser le reCAPTCHA en cas d'erreur
       if (recaptchaVerifier) {
         try {
           recaptchaVerifier.clear();
         } catch (clearError) {
-          console.log('Erreur nettoyage reCAPTCHA:', clearError);
+          logger.log('Erreur nettoyage reCAPTCHA:', clearError);
         }
       }
 
@@ -171,7 +172,7 @@ function PhoneAuthSlide({ onNext, onSkip }) {
       // Authentification réussie
       onNext({ user: result.user });
     } catch (err) {
-      console.error('Erreur lors de la vérification:', err);
+      logger.error('Erreur lors de la vérification:', err);
       setError(
         err.message === 'Firebase: Error (auth/invalid-verification-code).'
           ? 'Code invalide. Veuillez réessayer.'
@@ -201,7 +202,7 @@ function PhoneAuthSlide({ onNext, onSkip }) {
 
     // Le RecaptchaVerifier existant devrait toujours fonctionner
     // On ne le recrée pas pour éviter les conflits
-    console.log('✅ RecaptchaVerifier réaffiché');
+    logger.log('✅ RecaptchaVerifier réaffiché');
   };
 
   return (

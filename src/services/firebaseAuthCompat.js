@@ -4,6 +4,7 @@
  */
 
 import { FIREBASE_CONFIG } from '../config/config';
+import logger from './logger';
 
 // Variables globales pour stocker les instances
 let firebaseApp = null;
@@ -100,16 +101,16 @@ const initializeFirebaseApp = (resolve, reject) => {
     // Configurer la persistance
     firebaseAuth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL)
       .then(() => {
-        console.log('✅ Firebase Compat initialisé');
+        logger.log('✅ Firebase Compat initialisé');
         resolve({ app: firebaseApp, auth: firebaseAuth });
       })
       .catch((error) => {
-        console.error('Erreur setPersistence:', error);
+        logger.error('Erreur setPersistence:', error);
         initPromise = null; // Réinitialiser pour permettre une nouvelle tentative
         reject(error);
       });
   } catch (error) {
-    console.error('Erreur lors de l\'initialisation de Firebase:', error);
+    logger.error('Erreur lors de l\'initialisation de Firebase:', error);
     initPromise = null;
     reject(error);
   }
@@ -140,9 +141,9 @@ export const createCompatRecaptchaVerifier = async (containerId, invisible = fal
   if (currentRecaptchaVerifier) {
     try {
       currentRecaptchaVerifier.clear();
-      console.log('🧹 Ancien RecaptchaVerifier nettoyé');
+      logger.log('🧹 Ancien RecaptchaVerifier nettoyé');
     } catch (error) {
-      console.log('Erreur lors du nettoyage de l\'ancien verifier:', error);
+      logger.log('Erreur lors du nettoyage de l\'ancien verifier:', error);
     }
     currentRecaptchaVerifier = null;
   }
@@ -161,11 +162,11 @@ export const createCompatRecaptchaVerifier = async (containerId, invisible = fal
   container.style.position = 'relative';
   container.style.zIndex = '10000';
 
-  console.log('🔧 Création du RecaptchaVerifier Compat');
+  logger.log('🔧 Création du RecaptchaVerifier Compat');
 
   // Toujours utiliser le mode normal pour éviter les problèmes de design
   const size = invisible ? 'invisible' : 'normal';
-  console.log(`📱 Mode reCAPTCHA: ${size}`);
+  logger.log(`📱 Mode reCAPTCHA: ${size}`);
 
   try {
     const recaptchaVerifier = new window.firebase.auth.RecaptchaVerifier(
@@ -173,13 +174,13 @@ export const createCompatRecaptchaVerifier = async (containerId, invisible = fal
       {
         size: size,
         callback: () => {
-          console.log('✅ reCAPTCHA résolu');
+          logger.log('✅ reCAPTCHA résolu');
         },
         'expired-callback': () => {
-          console.log('⚠️ reCAPTCHA expiré');
+          logger.log('⚠️ reCAPTCHA expiré');
         },
         'error-callback': (error) => {
-          console.error('❌ Erreur reCAPTCHA:', error);
+          logger.error('❌ Erreur reCAPTCHA:', error);
         },
       }
     );
@@ -200,12 +201,12 @@ export const createCompatRecaptchaVerifier = async (containerId, invisible = fal
           iframe.parentElement.style.touchAction = 'auto';
         }
       });
-      console.log('🔧 Styles d\'interactivité appliqués aux iframes reCAPTCHA');
+      logger.log('🔧 Styles d\'interactivité appliqués aux iframes reCAPTCHA');
     }, 1000);
 
     return recaptchaVerifier;
   } catch (error) {
-    console.error('Erreur lors de la création du RecaptchaVerifier:', error);
+    logger.error('Erreur lors de la création du RecaptchaVerifier:', error);
     currentRecaptchaVerifier = null;
     throw error;
   }
@@ -224,7 +225,7 @@ export const sendVerificationCodeCompat = async (phoneNumber, recaptchaVerifier)
     throw new Error('Firebase Auth non initialisé');
   }
 
-  console.log('📱 Envoi du code de vérification à:', phoneNumber);
+  logger.log('📱 Envoi du code de vérification à:', phoneNumber);
 
   try {
     const confirmationResult = await firebaseAuth.signInWithPhoneNumber(
@@ -232,10 +233,10 @@ export const sendVerificationCodeCompat = async (phoneNumber, recaptchaVerifier)
       recaptchaVerifier
     );
 
-    console.log('✅ Code de vérification envoyé');
+    logger.log('✅ Code de vérification envoyé');
     return confirmationResult;
   } catch (error) {
-    console.error('❌ Erreur lors de l\'envoi du code:', error);
+    logger.error('❌ Erreur lors de l\'envoi du code:', error);
     throw error;
   }
 };
@@ -249,10 +250,10 @@ export const sendVerificationCodeCompat = async (phoneNumber, recaptchaVerifier)
 export const verifyCodeCompat = async (confirmationResult, code) => {
   try {
     const result = await confirmationResult.confirm(code);
-    console.log('✅ Code vérifié avec succès');
+    logger.log('✅ Code vérifié avec succès');
     return result;
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification du code:', error);
+    logger.error('❌ Erreur lors de la vérification du code:', error);
     throw error;
   }
 };
@@ -275,7 +276,7 @@ export const signOutCompat = async () => {
   }
 
   await firebaseAuth.signOut();
-  console.log('✅ Déconnexion réussie');
+  logger.log('✅ Déconnexion réussie');
 };
 
 /**

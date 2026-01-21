@@ -3,6 +3,8 @@
  * Pour stocker temporairement les données utilisateur non authentifié
  */
 
+import logger from './logger';
+
 const CACHE_KEYS = {
   USER_DATA: 'younzee_user_data',
   SESSION_ID: 'younzee_session_id',
@@ -31,10 +33,10 @@ export const saveUserDataToCache = (userData) => {
     };
 
     localStorage.setItem(CACHE_KEYS.USER_DATA, JSON.stringify(dataToSave));
-    console.log('Données sauvegardées dans le cache');
+    logger.log('Données sauvegardées dans le cache');
     return true;
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde dans le cache:', error);
+    logger.error('Erreur lors de la sauvegarde dans le cache:', error);
     return false;
   }
 };
@@ -53,7 +55,7 @@ export const getUserDataFromCache = () => {
     const userData = JSON.parse(cachedData);
     return userData;
   } catch (error) {
-    console.error('Erreur lors de la récupération du cache:', error);
+    logger.error('Erreur lors de la récupération du cache:', error);
     return null;
   }
 };
@@ -72,10 +74,10 @@ export const hasCachedData = () => {
 export const clearUserCache = () => {
   try {
     localStorage.removeItem(CACHE_KEYS.USER_DATA);
-    console.log('Cache supprimé');
+    logger.log('Cache supprimé');
     return true;
   } catch (error) {
-    console.error('Erreur lors de la suppression du cache:', error);
+    logger.error('Erreur lors de la suppression du cache:', error);
     return false;
   }
 };
@@ -88,10 +90,10 @@ export const clearAllCache = () => {
     Object.values(CACHE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
-    console.log('Tout le cache a été supprimé');
+    logger.log('Tout le cache a été supprimé');
     return true;
   } catch (error) {
-    console.error('Erreur lors de la suppression complète du cache:', error);
+    logger.error('Erreur lors de la suppression complète du cache:', error);
     return false;
   }
 };
@@ -112,7 +114,7 @@ export const updateCachedUserData = (updates) => {
     localStorage.setItem(CACHE_KEYS.USER_DATA, JSON.stringify(updatedData));
     return true;
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du cache:', error);
+    logger.error('Erreur lors de la mise à jour du cache:', error);
     return false;
   }
 };

@@ -1,4 +1,5 @@
 import { API_CONFIG, FIREBASE_CONFIG, MIRROR_API_CONFIG } from '../config/config';
+import logger from './logger';
 
 /**
  * Service de validation de la configuration
@@ -123,53 +124,53 @@ export const validateAllConfig = () => {
 export const logConfigValidation = (showWarnings = true) => {
   const validation = validateAllConfig();
 
-  console.group('🔧 Validation de la configuration Younzee');
+  logger.group('🔧 Validation de la configuration Younzee');
 
   // Firebase
   if (!validation.firebase.isValid) {
-    console.error('❌ Firebase: Configuration invalide');
-    console.error('   Variables manquantes:', validation.firebase.missingKeys);
+    logger.error('❌ Firebase: Configuration invalide');
+    logger.error('   Variables manquantes:', validation.firebase.missingKeys);
   } else {
-    console.log('✅ Firebase: Configuration valide');
+    logger.log('✅ Firebase: Configuration valide');
   }
 
   if (showWarnings && validation.firebase.warnings.length > 0) {
-    console.warn('⚠️ Firebase warnings:', validation.firebase.warnings);
+    logger.warn('⚠️ Firebase warnings:', validation.firebase.warnings);
   }
 
   // API VTO Backend
   if (!validation.api.isValid) {
-    console.error('❌ API VTO Backend: Configuration invalide');
-    console.error('   Variables manquantes:', validation.api.missingKeys);
+    logger.error('❌ API VTO Backend: Configuration invalide');
+    logger.error('   Variables manquantes:', validation.api.missingKeys);
   } else {
-    console.log('✅ API VTO Backend: Configuration valide');
+    logger.log('✅ API VTO Backend: Configuration valide');
   }
 
   if (showWarnings && validation.api.warnings.length > 0) {
-    console.warn('⚠️ API VTO Backend warnings:', validation.api.warnings);
+    logger.warn('⚠️ API VTO Backend warnings:', validation.api.warnings);
   }
 
   // Mirror API Backend
   if (!validation.mirrorApi.isValid) {
-    console.error('❌ Mirror API Backend: Configuration invalide');
-    console.error('   Variables manquantes:', validation.mirrorApi.missingKeys);
+    logger.error('❌ Mirror API Backend: Configuration invalide');
+    logger.error('   Variables manquantes:', validation.mirrorApi.missingKeys);
   } else {
-    console.log('✅ Mirror API Backend: Configuration valide');
+    logger.log('✅ Mirror API Backend: Configuration valide');
   }
 
   if (showWarnings && validation.mirrorApi.warnings.length > 0) {
-    console.warn('⚠️ Mirror API Backend warnings:', validation.mirrorApi.warnings);
+    logger.warn('⚠️ Mirror API Backend warnings:', validation.mirrorApi.warnings);
   }
 
   // Résumé
-  console.groupEnd();
+  logger.groupEnd();
 
   if (validation.summary.criticalIssues) {
-    console.error('🚨 PROBLÈMES CRITIQUES DÉTECTÉS - L\'application peut ne pas fonctionner correctement');
+    logger.error('🚨 PROBLÈMES CRITIQUES DÉTECTÉS - L\'application peut ne pas fonctionner correctement');
   } else if (validation.summary.totalWarnings > 0 && showWarnings) {
-    console.warn(`⚠️ ${validation.summary.totalWarnings} avertissement(s) détecté(s)`);
+    logger.warn(`⚠️ ${validation.summary.totalWarnings} avertissement(s) détecté(s)`);
   } else {
-    console.log('✅ Configuration OK');
+    logger.log('✅ Configuration OK');
   }
 
   return validation;

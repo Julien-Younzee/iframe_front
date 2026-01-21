@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import './SelfieSlide.css';
+import logger from '../services/logger';
 
 function SelfieSlide({ onNext, onBack, initialSelfie }) {
   const [hasPhoto, setHasPhoto] = useState(!!initialSelfie);
@@ -27,18 +28,18 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
   // Attacher le stream à la vidéo quand elle est montée
   useEffect(() => {
     if (isCameraActive && videoRef.current && streamRef.current) {
-      console.log('📺 Attachement du stream à l\'élément vidéo');
+      logger.log('📺 Attachement du stream à l\'élément vidéo');
       videoRef.current.srcObject = streamRef.current;
 
       videoRef.current.onloadedmetadata = async () => {
-        console.log('✅ Métadonnées chargées');
-        console.log('📐 Dimensions vidéo:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+        logger.log('✅ Métadonnées chargées');
+        logger.log('📐 Dimensions vidéo:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
 
         try {
           await videoRef.current.play();
-          console.log('✅ Lecture démarrée');
+          logger.log('✅ Lecture démarrée');
         } catch (err) {
-          console.error('❌ Erreur lors du démarrage de la vidéo:', err);
+          logger.error('❌ Erreur lors du démarrage de la vidéo:', err);
         }
       };
     }
@@ -47,7 +48,7 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
   const startCamera = async () => {
     try {
       setCameraError('');
-      console.log('🎥 Demande d\'accès à la caméra...');
+      logger.log('🎥 Demande d\'accès à la caméra...');
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -57,8 +58,8 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
         }
       });
 
-      console.log('✅ Stream obtenu:', stream);
-      console.log('📹 Video tracks:', stream.getVideoTracks());
+      logger.log('✅ Stream obtenu:', stream);
+      logger.log('📹 Video tracks:', stream.getVideoTracks());
 
       // Sauvegarder le stream immédiatement
       streamRef.current = stream;
@@ -67,31 +68,31 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
       setIsCameraActive(true);
 
     } catch (error) {
-      console.error('❌ Erreur d\'accès à la caméra:', error);
+      logger.error('❌ Erreur d\'accès à la caméra:', error);
       setCameraError('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès à la caméra.');
     }
   };
 
   const stopCamera = () => {
-    console.log('🛑 Arrêt de la caméra...');
+    logger.log('🛑 Arrêt de la caméra...');
 
     // Arrêter tous les tracks du stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
-        console.log('🔴 Arrêt du track:', track.kind, track.label, 'État:', track.readyState);
+        logger.log('🔴 Arrêt du track:', track.kind, track.label, 'État:', track.readyState);
         track.stop();
-        console.log('   → Nouvel état:', track.readyState);
+        logger.log('   → Nouvel état:', track.readyState);
       });
       streamRef.current = null;
     }
 
     // Nettoyer l'élément vidéo
     if (videoRef.current) {
-      console.log('🧹 Nettoyage de l\'élément vidéo');
+      logger.log('🧹 Nettoyage de l\'élément vidéo');
       const oldStream = videoRef.current.srcObject;
       if (oldStream) {
         oldStream.getTracks().forEach(track => {
-          console.log('🔴 Arrêt du track depuis vidéo:', track.kind, track.readyState);
+          logger.log('🔴 Arrêt du track depuis vidéo:', track.kind, track.readyState);
           track.stop();
         });
       }
@@ -104,14 +105,14 @@ function SelfieSlide({ onNext, onBack, initialSelfie }) {
 
     // Vérification finale de tous les streams actifs
     navigator.mediaDevices.enumerateDevices().then(() => {
-      console.log('✅ Caméra arrêtée et nettoyée');
-      console.log('🔍 Vérification : Y a-t-il encore des streams actifs ?');
+      logger.log('✅ Caméra arrêtée et nettoyée');
+      logger.log('🔍 Vérification : Y a-t-il encore des streams actifs ?');
 
       // Cette ligne devrait retourner un tableau vide ou des tracks tous "ended"
       if (streamRef.current) {
-        console.warn('⚠️ streamRef.current existe encore !');
+        logger.warn('⚠️ streamRef.current existe encore !');
       } else {
-        console.log('✓ streamRef.current est null');
+        logger.log('✓ streamRef.current est null');
       }
     });
   };

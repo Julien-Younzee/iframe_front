@@ -5,6 +5,7 @@ import {
   verifyCode,
 } from '../services/firebaseAuth';
 import './SaveAccountPrompt.css';
+import logger from '../services/logger';
 
 // Liens des applications mobiles - À remplacer par les vrais liens
 const APP_STORE_URL = 'https://apps.apple.com/app/younzee/6755129372';
@@ -67,7 +68,7 @@ function SaveAccountPrompt({ userData, onSave }) {
 
       const fullPhoneNumber = `${countryCode}${cleanedPhone}`;
 
-      console.log('📞 Numéro formaté pour Firebase (save account):', fullPhoneNumber);
+      logger.log('📞 Numéro formaté pour Firebase (save account):', fullPhoneNumber);
 
       const recaptchaVerifier = setupRecaptcha('recaptcha-container-save', true);
       const result = await sendVerificationCode(fullPhoneNumber, recaptchaVerifier);
@@ -75,7 +76,7 @@ function SaveAccountPrompt({ userData, onSave }) {
       setConfirmationResult(result);
       setStep('code');
     } catch (err) {
-      console.error('Erreur lors de l\'envoi du code:', err);
+      logger.error('Erreur lors de l\'envoi du code:', err);
       setError(
         err.message || 'Erreur lors de l\'envoi du code. Veuillez réessayer.'
       );
@@ -104,7 +105,7 @@ function SaveAccountPrompt({ userData, onSave }) {
       onSave({ user: result.user, userData });
       setStep('success');
     } catch (err) {
-      console.error('Erreur lors de la vérification:', err);
+      logger.error('Erreur lors de la vérification:', err);
       setError(
         err.message === 'Firebase: Error (auth/invalid-verification-code).'
           ? 'Code invalide. Veuillez réessayer.'

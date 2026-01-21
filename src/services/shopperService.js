@@ -1,14 +1,15 @@
-import { MIRROR_API_CONFIG, SIGNED_URL_SERVICE_CONFIG } from '../config/config';
+import { API_MOBILE_CONFIG, SIGNED_URL_SERVICE_CONFIG } from '../config/config';
 import { getCurrentUser } from './firebaseAuth';
 import { mapShopperDataFromDB, mapUserDataToDB } from '../config/dataMapping';
+import logger from './logger';
 
 /**
- * Service pour interagir avec le backend mirror-api pour la gestion des shoppers
+ * Service pour interagir avec le backend api-appMobile pour la gestion des shoppers
  */
 
 /**
  * Récupère les détails d'un shopper connecté via Firebase
- * Utilise le backend mirror-api avec authentification Firebase
+ * Utilise le backend api-appMobile avec authentification Firebase
  * @param {Object} user - Utilisateur Firebase (optionnel, utilise getCurrentUser si non fourni)
  * @param {boolean} mapData - Si true, mappe les données de la DB vers le format app (défaut: true)
  * @returns {Promise<Object|null>} - Les données du shopper (mappées ou brutes) ou null si non trouvé
@@ -23,9 +24,10 @@ export const getShopperDetails = async (user = null, mapData = true) => {
     // Récupérer le token Firebase
     const token = await firebaseUser.getIdToken();
 
-    const url = `${MIRROR_API_CONFIG.BASE_URL}/api/shopper/details/`;
+    // Utiliser le filtre firebase_id pour récupérer le shopper
+    const url = `${API_MOBILE_CONFIG.BASE_URL}/api/shoppers?firebase_id=${firebaseUser.uid}`;
 
-    console.log('🔍 Requête GET shopper details:', {
+    logger.log('🔍 Requête GET shopper details:', {
       url,
       uid: firebaseUser.uid,
       hasToken: !!token,
@@ -34,13 +36,11 @@ export const getShopperDetails = async (user = null, mapData = true) => {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
     });
 
-    console.log('📥 Réponse shopper details:', {
+    logger.log('📥 Réponse shopper details:', {
       status: response.status,
       statusText: response.statusText,
     });
@@ -53,12 +53,24 @@ export const getShopperDetails = async (user = null, mapData = true) => {
       throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
     }
 
-    const rawData = await response.json();
+    const responseData = await response.json();
+
+    // L'API retourne un objet avec results (pagination DRF) ou un tableau
+    const results = responseData.results || responseData;
+
+    // Si le tableau est vide, le shopper n'existe pas
+    if (Array.isArray(results) && results.length === 0) {
+      logger.log('📭 Aucun shopper trouvé pour ce firebase_id');
+      return null;
+    }
+
+    // Prendre le premier résultat
+    const rawData = Array.isArray(results) ? results[0] : results;
 
     // Log de TOUTES les données pour voir la structure exacte
-    console.log('🔍 Réponse complète de l\'API:', rawData);
+    logger.log('🔍 Réponse complète de l\'API:', rawData);
 
-    console.log('📊 Données brutes du shopper:', {
+    logger.log('📊 Données brutes du shopper:', {
       gender_id: rawData.gender_id,
       size_cm: rawData.size_cm,
       weight_kg: rawData.weight_kg,
@@ -70,7 +82,7 @@ export const getShopperDetails = async (user = null, mapData = true) => {
     // Mapper les données si demandé
     if (mapData) {
       const mappedData = mapShopperDataFromDB(rawData);
-      console.log('✅ Données mappées du shopper:', {
+      logger.log('✅ Données mappées du shopper:', {
         gender: mappedData.gender,
         height: mappedData.height,
         weight: mappedData.weight,
@@ -83,7 +95,7 @@ export const getShopperDetails = async (user = null, mapData = true) => {
 
     return rawData;
   } catch (error) {
-    console.error('Erreur lors de la récupération du shopper:', error);
+    logger.error('Erreur lors de la récupération du shopper:', error);
     throw error;
   }
 };
@@ -122,13 +134,13 @@ export const createShopper = async (shopperData, autoMap = true) => {
 
     // Si autoMap est activé et les données sont au format application
     if (autoMap && shopperData.gender && !shopperData.gender_id) {
-      console.log('🔄 Mapping des données app vers DB...');
+      logger.log('🔄 Mapping des données app vers DB...');
       const mappedData = mapUserDataToDB(shopperData);
       dataToSend = {
         ...shopperData, // Garder les champs non mappés (firebase_id, nickname, etc.)
         ...mappedData,  // Remplacer par les champs mappés
       };
-      console.log('✅ Données mappées pour création:', {
+      logger.log('✅ Données mappées pour création:', {
         gender_id: dataToSend.gender_id,
         size_cm: dataToSend.size_cm,
         weight_kg: dataToSend.weight_kg,
@@ -137,7 +149,7 @@ export const createShopper = async (shopperData, autoMap = true) => {
       });
     }
 
-    const url = `${MIRROR_API_CONFIG.BASE_URL}/api/shopper/create`;
+    const url = `${API_MOBILE_CONFIG.BASE_URL}/api/shoppers`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -155,10 +167,10 @@ export const createShopper = async (shopperData, autoMap = true) => {
 
     const data = await response.json();
 
-    // PostgREST retourne un tableau
-    return Array.isArray(data) ? data[0] : data;
+    // DRF retourne directement l'objet créé
+    return data;
   } catch (error) {
-    console.error('Erreur lors de la création du shopper:', error);
+    logger.error('Erreur lors de la création du shopper:', error);
     throw error;
   }
 };
@@ -175,7 +187,7 @@ export const generateSignedUrl = async (gcsUrl) => {
     }
 
     if (!SIGNED_URL_SERVICE_CONFIG.BASE_URL) {
-      console.warn('⚠️ Service d\'URL signée non configuré, utilisation de l\'URL directe');
+      logger.warn('⚠️ Service d\'URL signée non configuré, utilisation de l\'URL directe');
       return gcsUrl;
     }
 
@@ -192,7 +204,7 @@ export const generateSignedUrl = async (gcsUrl) => {
       userId = userIdMatch[1];
     }
 
-    console.log('📝 Génération d\'URL signée pour:', { bucket, blob, user_id: userId });
+    logger.log('📝 Génération d\'URL signée pour:', { bucket, blob, user_id: userId });
 
     const requestBody = {
       bucket,
@@ -220,11 +232,11 @@ export const generateSignedUrl = async (gcsUrl) => {
     }
 
     const data = await response.json();
-    console.log('✅ URL signée générée');
+    logger.log('✅ URL signée générée');
 
     return data.url;
   } catch (error) {
-    console.error('❌ Erreur lors de la génération de l\'URL signée:', error);
+    logger.error('❌ Erreur lors de la génération de l\'URL signée:', error);
     // Fallback: retourner l'URL originale
     return gcsUrl;
   }
@@ -266,7 +278,7 @@ export const convertImageUrlToBase64 = async (imageUrl) => {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Erreur lors de la conversion de l\'image en base64:', error);
+    logger.error('Erreur lors de la conversion de l\'image en base64:', error);
     throw error;
   }
 };

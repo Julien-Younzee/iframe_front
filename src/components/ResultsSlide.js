@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './ResultsSlide.css';
 import { generateVirtualTryOn } from '../services/api';
+import logger from '../services/logger';
 
 function ResultsSlide({ userData, onRestart }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +30,7 @@ function ResultsSlide({ userData, onRestart }) {
       // Le résultat est une image en base64
       setResultImage(result.imageBase64);
     } catch (err) {
-      console.error('Erreur lors de la génération:', err);
+      logger.error('Erreur lors de la génération:', err);
       setError('Une erreur est survenue lors de la génération de votre essayage virtuel. Veuillez réessayer.');
     } finally {
       setIsLoading(false);

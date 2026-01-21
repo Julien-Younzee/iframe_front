@@ -2,6 +2,8 @@
  * Service pour la gestion et conversion des images
  */
 
+import logger from './logger';
+
 /**
  * Convertit une URL d'image en base64 via CORS proxy si nécessaire
  * @param {string} imageUrl - URL de l'image
@@ -13,7 +15,7 @@ export const convertImageUrlToBase64 = async (imageUrl) => {
       throw new Error('URL de l\'image est requise');
     }
 
-    console.log('🖼️ Conversion de l\'image en base64:', imageUrl);
+    logger.log('🖼️ Conversion de l\'image en base64:', imageUrl);
 
     // Tenter de charger l'image directement
     try {
@@ -29,13 +31,13 @@ export const convertImageUrlToBase64 = async (imageUrl) => {
       const blob = await response.blob();
       return await blobToBase64(blob);
     } catch (corsError) {
-      console.warn('⚠️ Erreur CORS, tentative avec canvas...', corsError);
+      logger.warn('⚠️ Erreur CORS, tentative avec canvas...', corsError);
 
       // Fallback: utiliser un canvas pour contourner CORS
       return await convertImageWithCanvas(imageUrl);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la conversion de l\'image:', error);
+    logger.error('❌ Erreur lors de la conversion de l\'image:', error);
     throw error;
   }
 };
@@ -208,7 +210,7 @@ export const convertMultipleImagesToBase64 = async (imageUrls) => {
   try {
     const conversions = imageUrls.map((url) =>
       convertImageUrlToBase64(url).catch((error) => {
-        console.error(`Erreur conversion ${url}:`, error);
+        logger.error(`Erreur conversion ${url}:`, error);
         return null; // Retourner null en cas d'erreur pour ne pas bloquer les autres
       })
     );
@@ -216,7 +218,7 @@ export const convertMultipleImagesToBase64 = async (imageUrls) => {
     const results = await Promise.all(conversions);
     return results.filter((base64) => base64 !== null);
   } catch (error) {
-    console.error('Erreur lors de la conversion multiple:', error);
+    logger.error('Erreur lors de la conversion multiple:', error);
     throw error;
   }
 };

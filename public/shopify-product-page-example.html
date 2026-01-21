@@ -163,6 +163,25 @@
             color: white;
         }
 
+        .size-option.out-of-stock {
+            opacity: 0.5;
+            text-decoration: line-through;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .size-option.out-of-stock::after {
+            content: 'Épuisé';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc2626;
+            color: white;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
         /* Bouton "Ajouter au panier" classique */
         .add-to-cart-classic {
             width: 100%;
@@ -296,10 +315,12 @@
     <!-- Annotation -->
     <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
         <div class="annotation">
-            <strong>📌 Test en situation réelle - Younzee VTO</strong><br>
-            Cliquez sur "Essayer virtuellement" pour tester le workflow complet :
-            l'iframe récupérera l'image du hoodie Lacoste, vous pourrez entrer vos mensurations,
-            prendre un selfie, et voir le résultat VTO généré par le backend.
+            <strong>📌 Test en situation réelle - Younzee VTO avec gestion des stocks</strong><br>
+            Cliquez sur "Essayer virtuellement" pour tester le workflow complet.<br><br>
+            <strong>📦 Tailles disponibles :</strong> S, M, L<br>
+            <strong>❌ Tailles épuisées :</strong> XS, XL<br><br>
+            L'iframe affichera un badge "Épuisé" sur les tailles indisponibles et
+            désactivera le bouton "Ajouter au panier" si vous sélectionnez une taille épuisée.
         </div>
     </div>
 
@@ -342,11 +363,11 @@
             <div class="size-selector">
                 <label>Taille</label>
                 <div class="size-options">
-                    <button class="size-option">XS</button>
-                    <button class="size-option">S</button>
-                    <button class="size-option selected">M</button>
-                    <button class="size-option">L</button>
-                    <button class="size-option">XL</button>
+                    <button class="size-option out-of-stock" data-size="XS">XS</button>
+                    <button class="size-option" data-size="S">S</button>
+                    <button class="size-option selected" data-size="M">M</button>
+                    <button class="size-option" data-size="L">L</button>
+                    <button class="size-option out-of-stock" data-size="XL">XL</button>
                 </div>
             </div>
 
@@ -412,6 +433,14 @@
             imageUrl: 'http://localhost:3000/pull_5.jpg',
             price: '129.99',
             category: 'hoodie',
+            // Variantes avec disponibilité (comme Shopify les envoie)
+            variants: [
+                { id: 1001, title: 'XS', available: false },
+                { id: 1002, title: 'S', available: true },
+                { id: 1003, title: 'M', available: true },
+                { id: 1004, title: 'L', available: true },
+                { id: 1005, title: 'XL', available: false },
+            ],
         };
 
         // Ouvrir l'iframe

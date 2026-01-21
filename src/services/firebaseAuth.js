@@ -7,6 +7,7 @@ import {
   browserLocalPersistence,
 } from 'firebase/auth';
 import { FIREBASE_CONFIG } from '../config/config';
+import logger from './logger';
 
 // Initialiser Firebase
 let app;
@@ -19,14 +20,14 @@ try {
   // Initialiser la persistence de manière asynchrone
   setPersistence(auth, browserLocalPersistence)
     .then(() => {
-      console.log('✅ Firebase persistence initialisée');
+      logger.log('✅ Firebase persistence initialisée');
     })
     .catch((error) => {
-      console.warn('⚠️ Erreur lors de la configuration de la persistence Firebase:', error);
+      logger.warn('⚠️ Erreur lors de la configuration de la persistence Firebase:', error);
       // Continuer même si la persistence échoue (peut arriver en iframe)
     });
 } catch (error) {
-  console.error('Erreur lors de l\'initialisation de Firebase:', error);
+  logger.error('Erreur lors de l\'initialisation de Firebase:', error);
 }
 
 /**
@@ -44,16 +45,16 @@ export const setupRecaptcha = (containerId = 'recaptcha-container', invisible = 
     const recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       size: invisible ? 'invisible' : 'normal',
       callback: (response) => {
-        console.log('reCAPTCHA résolu', response);
+        logger.log('reCAPTCHA résolu', response);
       },
       'expired-callback': () => {
-        console.log('reCAPTCHA expiré, rechargez la page');
+        logger.log('reCAPTCHA expiré, rechargez la page');
       },
     });
 
     return recaptchaVerifier;
   } catch (error) {
-    console.error('Erreur lors de la configuration du reCAPTCHA:', error);
+    logger.error('Erreur lors de la configuration du reCAPTCHA:', error);
     throw error;
   }
 };
@@ -77,7 +78,7 @@ export const sendVerificationCode = async (phoneNumber, recaptchaVerifier) => {
     );
     return confirmationResult;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi du code:', error);
+    logger.error('Erreur lors de l\'envoi du code:', error);
     throw error;
   }
 };
@@ -93,7 +94,7 @@ export const verifyCode = async (confirmationResult, code) => {
     const result = await confirmationResult.confirm(code);
     return result;
   } catch (error) {
-    console.error('Erreur lors de la vérification du code:', error);
+    logger.error('Erreur lors de la vérification du code:', error);
     throw error;
   }
 };
@@ -118,7 +119,7 @@ export const signOut = async () => {
   try {
     await auth.signOut();
   } catch (error) {
-    console.error('Erreur lors de la déconnexion:', error);
+    logger.error('Erreur lors de la déconnexion:', error);
     throw error;
   }
 };

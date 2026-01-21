@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './ResultsSlideNew.css';
 import { generateVirtualTryOn, generateMockSizeRecommendations } from '../services/vtoService';
 import { saveUserDataToCache } from '../services/cacheService';
+import logger from '../services/logger';
 // import SaveAccountPrompt from './SaveAccountPrompt'; // Temporairement désactivé
 
 function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }) {
@@ -37,7 +38,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
     try {
       // Si le produit est en taille unique, pas de calcul nécessaire
       if (userData.isOneSize) {
-        console.log('📏 Produit en taille unique - pas de calcul de recommandation');
+        logger.log('📏 Produit en taille unique - pas de calcul de recommandation');
         setSizeRecommendation({
           isOneSize: true,
           oneSize: {
@@ -53,7 +54,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
 
       // TODO: Appel au backend de recommandation de taille
       // Pour l'instant, utilisation de l'algorithme mock amélioré
-      console.log('🚀 Génération de la recommandation de taille intelligente...', {
+      logger.log('🚀 Génération de la recommandation de taille intelligente...', {
         gender: userData.gender,
         height: userData.height,
         weight: userData.weight,
@@ -68,14 +69,14 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
       const mockRecommendations = generateMockSizeRecommendations(userData);
       setSizeRecommendation(mockRecommendations);
 
-      console.log('✅ Recommandation de taille générée:', mockRecommendations);
+      logger.log('✅ Recommandation de taille générée:', mockRecommendations);
 
       // Log des métadonnées pour debug
       if (mockRecommendations.metadata) {
-        console.log('📊 Métadonnées de recommandation:', mockRecommendations.metadata);
+        logger.log('📊 Métadonnées de recommandation:', mockRecommendations.metadata);
       }
     } catch (err) {
-      console.error('❌ Erreur lors de la recommandation de taille:', err);
+      logger.error('❌ Erreur lors de la recommandation de taille:', err);
       setErrorSizeReco(
         err.message || 'Une erreur est survenue lors de la recommandation de taille.'
       );
@@ -98,7 +99,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
       }
 
       if (!clothingImageToUse) {
-        console.warn('⚠️ Image du vêtement manquante');
+        logger.warn('⚠️ Image du vêtement manquante');
         setErrorVTO('Image du vêtement manquante');
         return;
       }
@@ -107,7 +108,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
       const isExistingAvatar = Boolean(userData.avatarBase64);
 
       // Appel réel au backend VTO
-      console.log('🚀 Appel du backend VTO...', isExistingAvatar ? '(avec avatar)' : '(avec selfie)');
+      logger.log('🚀 Appel du backend VTO...', isExistingAvatar ? '(avec avatar)' : '(avec selfie)');
       const result = await generateVirtualTryOn({
         selfieBase64: selfieToUse,
         clothingBase64: clothingImageToUse,
@@ -119,7 +120,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
         isExistingAvatar: isExistingAvatar,
       });
 
-      console.log('✅ Résultat VTO reçu');
+      logger.log('✅ Résultat VTO reçu');
 
       // Mettre à jour l'avatar généré
       if (result.imageBase64) {
@@ -132,7 +133,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
       //   setShowSavePrompt(true);
       // }
     } catch (err) {
-      console.error('❌ Erreur lors de la génération VTO:', err);
+      logger.error('❌ Erreur lors de la génération VTO:', err);
       setErrorVTO(
         err.message || 'Une erreur est survenue lors de la génération de l\'avatar.'
       );
@@ -153,6 +154,47 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
   // const handleSkipSave = () => {
   //   setShowSavePrompt(false);
   // };
+
+  // Vérifier si une taille est disponible
+  const isSizeAvailable = (size) => {
+    // Si pas de variants fournis, considérer comme disponible par défaut
+    if (!userData.variants || userData.variants.length === 0) {
+      logger.log('⚠️ Pas de variants disponibles, taille considérée comme disponible');
+      return true;
+    }
+
+    const targetSize = (size || '').toLowerCase().trim();
+
+    // Chercher la variante correspondant à la taille (correspondance exacte uniquement)
+    const variant = userData.variants.find(v => {
+      const variantSize = (v.size || '').toLowerCase().trim();
+      return variantSize === targetSize;
+    });
+
+    logger.log(`🔍 Vérification taille "${size}":`, {
+      variantTrouvée: variant,
+      disponible: variant ? variant.available : 'non trouvée = indisponible'
+    });
+
+    // Si variante trouvée, retourner sa disponibilité
+    // Si variante NON trouvée, la taille n'existe pas donc indisponible
+    return variant ? variant.available : false;
+  };
+
+  // Obtenir la taille sélectionnée actuelle
+  const getSelectedSize = () => {
+    if (sizeRecommendation?.isOneSize) {
+      return 'Taille unique';
+    }
+    return sizeRecommendation?.[selectedFitType]?.size || null;
+  };
+
+  // Vérifier si la taille sélectionnée est disponible
+  const isSelectedSizeAvailable = () => {
+    const size = getSelectedSize();
+    if (!size) return false;
+    return isSizeAvailable(size);
+  };
 
   const handleAddToCart = () => {
     // Gestion du cas taille unique
@@ -214,28 +256,37 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
                 /* Cas Tailles Multiples */
                 <div className="size-options">
                   <button
-                    className={`size-option ${selectedFitType === 'fit' ? 'active' : ''}`}
+                    className={`size-option ${selectedFitType === 'fit' ? 'active' : ''} ${!isSizeAvailable(sizeRecommendation.fit.size) ? 'unavailable' : ''}`}
                     onClick={() => setSelectedFitType('fit')}
                     data-type="fit"
                   >
                     <span className="size-label">{sizeRecommendation.fit.label}</span>
                     <span className="size-value">{sizeRecommendation.fit.size}</span>
+                    {!isSizeAvailable(sizeRecommendation.fit.size) && (
+                      <span className="unavailable-badge">Épuisé</span>
+                    )}
                   </button>
                   <button
-                    className={`size-option ${selectedFitType === 'ideal' ? 'active' : ''}`}
+                    className={`size-option ${selectedFitType === 'ideal' ? 'active' : ''} ${!isSizeAvailable(sizeRecommendation.ideal.size) ? 'unavailable' : ''}`}
                     onClick={() => setSelectedFitType('ideal')}
                     data-type="ideal"
                   >
                     <span className="size-label">{sizeRecommendation.ideal.label}</span>
                     <span className="size-value">{sizeRecommendation.ideal.size}</span>
+                    {!isSizeAvailable(sizeRecommendation.ideal.size) && (
+                      <span className="unavailable-badge">Épuisé</span>
+                    )}
                   </button>
                   <button
-                    className={`size-option ${selectedFitType === 'oversize' ? 'active' : ''}`}
+                    className={`size-option ${selectedFitType === 'oversize' ? 'active' : ''} ${!isSizeAvailable(sizeRecommendation.oversize.size) ? 'unavailable' : ''}`}
                     onClick={() => setSelectedFitType('oversize')}
                     data-type="oversize"
                   >
                     <span className="size-label">{sizeRecommendation.oversize.label}</span>
                     <span className="size-value">{sizeRecommendation.oversize.size}</span>
+                    {!isSizeAvailable(sizeRecommendation.oversize.size) && (
+                      <span className="unavailable-badge">Épuisé</span>
+                    )}
                   </button>
                 </div>
               )}
@@ -248,8 +299,12 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
 
               {/* Bouton Ajouter au panier */}
               <div className="add-to-cart-section">
-                <button className="btn btn-add-to-cart" onClick={handleAddToCart}>
-                  Ajouter au panier
+                <button
+                  className="btn btn-add-to-cart"
+                  onClick={handleAddToCart}
+                  disabled={!isSelectedSizeAvailable()}
+                >
+                  {isSelectedSizeAvailable() ? 'Ajouter au panier' : 'Taille indisponible'}
                 </button>
               </div>
             </>
@@ -276,6 +331,7 @@ function ResultsSlideNew({ userData, isAuthenticated, onRestart, onSaveAccount }
           ) : avatarImage ? (
             <div className="avatar-container">
               <img src={avatarImage} alt="Votre avatar" className="avatar-image" />
+              <p className="ai-disclaimer">Image générée par IA - Des imperfections peuvent apparaître</p>
             </div>
           ) : null}
         </div>

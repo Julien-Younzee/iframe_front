@@ -5,15 +5,19 @@ import MeasurementsSlide from './components/MeasurementsSlide';
 import ClothingSizesSlide from './components/ClothingSizesSlide';
 import SelfieSlide from './components/SelfieSlide';
 import ResultsSlideNew from './components/ResultsSlideNew';
-import { clearUserCache } from './services/cacheService';
+import CacheChoiceModal from './components/CacheChoiceModal';
+import { clearUserCache, getUserDataFromCache, hasCachedData, saveUserDataToCache } from './services/cacheService';
 import { getShopperDetails, convertImageUrlToBase64 as convertAvatarToBase64, createShopper } from './services/shopperService';
 import { convertImageUrlToBase64 as convertClothingImageToBase64 } from './services/imageService';
+import logger from './services/logger';
 import logo from './assets/logo.png';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showCacheModal, setShowCacheModal] = useState(false);
+  const [cachedUserData, setCachedUserData] = useState(null);
   const [userData, setUserData] = useState({
     gender: '',
     height: '',
@@ -26,6 +30,7 @@ function App() {
     avatarUrl: '', // URL de l'avatar depuis PostgreSQL
     avatarBase64: '', // Avatar en base64 pour l'API VTO
     isOneSize: false, // True si le produit est en taille unique
+    variants: [], // Liste des variantes avec disponibilité [{size, available, id}, ...]
   });
 
   // Détection du vêtement depuis la page parente
@@ -46,20 +51,33 @@ function App() {
           const isOneSize = clothingItem?.isOneSize || isOneSizeFromVariant;
 
           if (isOneSize) {
-            console.log('📏 Produit détecté comme taille unique:', variantTitle || 'flag isOneSize');
+            logger.log('📏 Produit détecté comme taille unique:', variantTitle || 'flag isOneSize');
           }
 
-          setUserData((prev) => ({ ...prev, clothingItem, isOneSize }));
+          // Extraire les variantes avec leur disponibilité
+          // Format attendu: [{id, title, available}, ...]
+          const variants = clothingItem?.variants || [];
+          const formattedVariants = variants.map(v => ({
+            size: v.title || v.size,
+            available: v.available !== false, // Par défaut disponible si non spécifié
+            id: v.id,
+          }));
+
+          if (formattedVariants.length > 0) {
+            logger.log('📦 Variantes reçues:', formattedVariants);
+          }
+
+          setUserData((prev) => ({ ...prev, clothingItem, isOneSize, variants: formattedVariants }));
 
           // Convertir l'image du vêtement en base64 si une URL est fournie
           if (clothingItem?.imageUrl) {
-            console.log('🖼️ Conversion de l\'image du vêtement en base64...');
+            logger.log('🖼️ Conversion de l\'image du vêtement en base64...');
             try {
               const clothingImageBase64 = await convertClothingImageToBase64(clothingItem.imageUrl);
               setUserData((prev) => ({ ...prev, clothingImageBase64 }));
-              console.log('✅ Image du vêtement convertie en base64');
+              logger.log('✅ Image du vêtement convertie en base64');
             } catch (conversionError) {
-              console.error('❌ Erreur conversion image vêtement:', conversionError);
+              logger.error('❌ Erreur conversion image vêtement:', conversionError);
             }
           }
         }
@@ -74,7 +92,7 @@ function App() {
           setIsOpen(false);
         }
       } catch (error) {
-        console.error('Erreur lors du traitement du message:', error);
+        logger.error('Erreur lors du traitement du message:', error);
       }
     };
 
@@ -106,7 +124,7 @@ function App() {
         shopperData = await getShopperDetails(authUser, true);
 
         if (shopperData) {
-          console.log('✅ Shopper récupéré avec données mappées:', {
+          logger.log('✅ Shopper récupéré avec données mappées:', {
             gender: shopperData.gender,
             height: shopperData.height,
             weight: shopperData.weight,
@@ -118,19 +136,19 @@ function App() {
           // Récupérer l'avatar si disponible
           if (shopperData.avatar_path) {
             avatarUrl = shopperData.avatar_path;
-            console.log('Avatar récupéré depuis mirror-api:', avatarUrl);
+            logger.log('Avatar récupéré depuis mirror-api:', avatarUrl);
 
             // Convertir l'image en base64 pour l'API VTO
             try {
               avatarBase64 = await convertAvatarToBase64(avatarUrl);
-              console.log('Avatar converti en base64');
+              logger.log('Avatar converti en base64');
             } catch (conversionError) {
-              console.warn('Impossible de convertir l\'avatar en base64:', conversionError);
+              logger.warn('Impossible de convertir l\'avatar en base64:', conversionError);
             }
           }
         }
       } catch (apiError) {
-        console.warn('Impossible de récupérer le shopper depuis mirror-api:', apiError);
+        logger.warn('Impossible de récupérer le shopper depuis mirror-api:', apiError);
       }
 
       // Si un shopper existe avec avatar et données complètes, aller directement aux résultats
@@ -165,7 +183,7 @@ function App() {
         setCurrentSlide(1);
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération du profil:', error);
+      logger.error('Erreur lors de la récupération du profil:', error);
       // En cas d'erreur, continuer le flux normal
       setCurrentSlide(1);
     }
@@ -174,6 +192,56 @@ function App() {
   // Gérer le "skip" - continuer sans compte
   const handleSkipAuth = () => {
     setIsAuthenticated(false);
+
+    // Vérifier si des données sont en cache
+    if (hasCachedData()) {
+      const cached = getUserDataFromCache();
+      // Vérifier que les données sont valides (au moins gender, height, weight)
+      if (cached && cached.gender && cached.height && cached.weight) {
+        setCachedUserData(cached);
+        setShowCacheModal(true);
+        return;
+      }
+    }
+
+    // Pas de cache valide, continuer normalement
+    setCurrentSlide(1);
+  };
+
+  // Utiliser les données en cache
+  const handleUseCachedData = () => {
+    if (cachedUserData) {
+      // Charger les données en cache dans userData (en préservant clothingItem du produit actuel)
+      setUserData((prev) => ({
+        ...prev,
+        gender: cachedUserData.gender || '',
+        height: cachedUserData.height || '',
+        weight: cachedUserData.weight || '',
+        sizeTop: cachedUserData.sizeTop || '',
+        sizeBottom: cachedUserData.sizeBottom || '',
+        selfieBase64: cachedUserData.selfieBase64 || '',
+        avatarBase64: cachedUserData.avatarBase64 || '',
+        avatarUrl: cachedUserData.avatarUrl || '',
+      }));
+
+      setShowCacheModal(false);
+      setCachedUserData(null);
+
+      // Si on a un selfie/avatar en cache, aller directement aux résultats
+      if (cachedUserData.selfieBase64 || cachedUserData.avatarBase64) {
+        setCurrentSlide(4);
+      } else {
+        // Sinon aller à la slide selfie
+        setCurrentSlide(3);
+      }
+    }
+  };
+
+  // Saisir de nouvelles données
+  const handleEnterNewData = () => {
+    clearUserCache();
+    setShowCacheModal(false);
+    setCachedUserData(null);
     setCurrentSlide(1);
   };
 
@@ -199,9 +267,9 @@ function App() {
       // Nettoyer le cache local
       clearUserCache();
 
-      console.log('✅ Compte créé avec succès dans mirror-api');
+      logger.log('✅ Compte créé avec succès dans mirror-api');
     } catch (error) {
-      console.error('Erreur lors de la création du compte:', error);
+      logger.error('Erreur lors de la création du compte:', error);
     }
   };
 
@@ -279,6 +347,7 @@ function App() {
                 avatarUrl: '',
                 avatarBase64: '',
                 isOneSize: prev.isOneSize, // Conserver l'info taille unique
+                variants: prev.variants, // Conserver les variantes
               }));
             }}
           />
@@ -299,6 +368,16 @@ function App() {
 
   return (
     <>
+      {/* Modal de choix cache */}
+      {showCacheModal && cachedUserData && (
+        <CacheChoiceModal
+          cachedData={cachedUserData}
+          onUseCachedData={handleUseCachedData}
+          onEnterNewData={handleEnterNewData}
+          onClose={handleEnterNewData}
+        />
+      )}
+
       {/* Overlay */}
       <div
         className={`younzee-overlay ${isOpen ? 'open' : ''}`}

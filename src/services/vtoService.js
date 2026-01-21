@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/config';
+import logger from './logger';
 
 /**
  * Service dédié à l'intégration avec le backend VTO
@@ -17,7 +18,7 @@ export const generateVTOWithAvatar = async (avatarBase64, vetementBase64) => {
       throw new Error('Avatar et vêtement requis');
     }
 
-    console.log('📤 Envoi requête VTO (avec avatar)...');
+    logger.log('📤 Envoi requête VTO (avec avatar)...');
 
     const response = await fetch(
       `${API_CONFIG.BACKEND_URL}/vto/with-avatar`,
@@ -39,7 +40,7 @@ export const generateVTOWithAvatar = async (avatarBase64, vetementBase64) => {
     }
 
     const data = await response.json();
-    console.log('✅ VTO généré (avec avatar)');
+    logger.log('✅ VTO généré (avec avatar)');
 
     return {
       success: data.success,
@@ -47,7 +48,7 @@ export const generateVTOWithAvatar = async (avatarBase64, vetementBase64) => {
       message: data.message,
     };
   } catch (error) {
-    console.error('❌ Erreur VTO (avec avatar):', error);
+    logger.error('❌ Erreur VTO (avec avatar):', error);
     throw error;
   }
 };
@@ -78,7 +79,7 @@ export const generateVTOWithSelfie = async ({
       throw new Error('Selfie et vêtement requis');
     }
 
-    console.log('📤 Envoi requête VTO (avec selfie)...');
+    logger.log('📤 Envoi requête VTO (avec selfie)...');
 
     const response = await fetch(
       `${API_CONFIG.BACKEND_URL}/vto/with-selfie`,
@@ -105,7 +106,7 @@ export const generateVTOWithSelfie = async ({
     }
 
     const data = await response.json();
-    console.log('✅ VTO généré (avec selfie)');
+    logger.log('✅ VTO généré (avec selfie)');
 
     return {
       success: data.success,
@@ -113,7 +114,7 @@ export const generateVTOWithSelfie = async ({
       message: data.message,
     };
   } catch (error) {
-    console.error('❌ Erreur VTO (avec selfie):', error);
+    logger.error('❌ Erreur VTO (avec selfie):', error);
     throw error;
   }
 };
@@ -171,7 +172,7 @@ export const generateVirtualTryOn = async ({
       message: result.message,
     };
   } catch (error) {
-    console.error('❌ Erreur lors de la génération VTO:', error);
+    logger.error('❌ Erreur lors de la génération VTO:', error);
     throw error;
   }
 };
@@ -194,7 +195,7 @@ export const checkVTOServiceHealth = async () => {
 
     return response.ok;
   } catch (error) {
-    console.error('Service VTO non disponible:', error);
+    logger.error('Service VTO non disponible:', error);
     return false;
   }
 };
@@ -247,7 +248,7 @@ export const generateSmartMockRecommendations = (userData) => {
     }
   } else {
     // Si IMC invalide (données manquantes), utiliser morphologie standard par défaut
-    console.warn('⚠️ IMC invalide (données de taille/poids manquantes), utilisation de morphologie standard');
+    logger.warn('⚠️ IMC invalide (données de taille/poids manquantes), utilisation de morphologie standard');
     morphology = 'standard';
     morphologyLabel = 'Standard (données manquantes)';
   }

@@ -1,5 +1,6 @@
 import { API_CONFIG } from '../config/config';
 import { getCurrentUser } from './firebaseAuth';
+import logger from './logger';
 
 /**
  * Récupère le profil utilisateur depuis le backend Django
@@ -31,7 +32,7 @@ export const getUserProfile = async (uid) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
+    logger.error('Erreur lors de la récupération du profil:', error);
     throw error;
   }
 };
@@ -68,7 +69,7 @@ export const saveUserProfile = async (userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde du profil:', error);
+    logger.error('Erreur lors de la sauvegarde du profil:', error);
     throw error;
   }
 };
@@ -101,7 +102,7 @@ export const getSizeRecommendation = async (userData) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Erreur lors de la recommandation de taille:', error);
+    logger.error('Erreur lors de la recommandation de taille:', error);
     throw error;
   }
 };
@@ -155,7 +156,7 @@ export const generateVirtualTryOn = async (userData) => {
       recommendation: data.recommendation,
     };
   } catch (error) {
-    console.error('Erreur API:', error);
+    logger.error('Erreur API:', error);
     throw error;
   }
 };

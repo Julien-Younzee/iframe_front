@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import logger from '../services/logger';
 
 interface FirebaseRecaptchaVerifierWebProps {
   firebaseConfig: any;
@@ -27,7 +28,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
   useEffect(() => {
     if (Platform.OS !== 'web') return;
 
-    console.log('🌐 Initialisation du reCAPTCHA Web');
+    logger.log('🌐 Initialisation du reCAPTCHA Web');
 
     // Charger le script Firebase si ce n'est pas déjà fait
     if (!(window as any).firebase) {
@@ -42,19 +43,19 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
       document.head.appendChild(script2);
 
       script2.onload = () => {
-        console.log('✅ Firebase scripts chargés');
+        logger.log('✅ Firebase scripts chargés');
         // Attendre un peu pour s'assurer que tout est initialisé
         setTimeout(() => {
           if ((window as any).firebase && typeof (window as any).firebase.auth === 'function') {
-            console.log('✅ firebase.auth est disponible');
+            logger.log('✅ firebase.auth est disponible');
             initializeRecaptcha();
           } else {
-            console.error('❌ firebase.auth n\'est toujours pas disponible');
+            logger.error('❌ firebase.auth n\'est toujours pas disponible');
           }
         }, 100);
       };
     } else if (typeof (window as any).firebase.auth === 'function') {
-      console.log('✅ Firebase déjà chargé');
+      logger.log('✅ Firebase déjà chargé');
       initializeRecaptcha();
     }
 
@@ -64,7 +65,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
         try {
           (window as any).grecaptcha.reset(widgetIdRef.current);
         } catch (e) {
-          console.log('Cleanup grecaptcha error:', e);
+          logger.log('Cleanup grecaptcha error:', e);
         }
       }
     };
@@ -72,11 +73,11 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
 
   const initializeRecaptcha = () => {
     if (!containerRef.current) {
-      console.error('❌ Container ref non disponible');
+      logger.error('❌ Container ref non disponible');
       return;
     }
 
-    console.log('🔧 Configuration Firebase:', {
+    logger.log('🔧 Configuration Firebase:', {
       apiKey: firebaseConfig.apiKey ? '✅' : '❌',
       authDomain: firebaseConfig.authDomain ? '✅' : '❌',
       projectId: firebaseConfig.projectId ? '✅' : '❌',
@@ -86,22 +87,22 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
       // Initialiser Firebase si ce n'est pas déjà fait
       if (!(window as any).firebase.apps.length) {
         (window as any).firebase.initializeApp(firebaseConfig);
-        console.log('✅ Firebase initialisé');
+        logger.log('✅ Firebase initialisé');
       }
 
       // Configurer la langue
       (window as any).firebase.auth().languageCode = languageCode;
 
-      console.log('🎯 RecaptchaVerifier prêt à être créé');
+      logger.log('🎯 RecaptchaVerifier prêt à être créé');
     } catch (error) {
-      console.error('❌ Erreur initialisation Firebase:', error);
+      logger.error('❌ Erreur initialisation Firebase:', error);
     }
   };
 
   useImperativeHandle(ref, () => ({
     type: 'recaptcha',
     verify: async () => {
-      console.log('🔍 Verification demandée');
+      logger.log('🔍 Verification demandée');
 
       return new Promise<string>((resolve, reject) => {
         resolveRef.current = resolve;
@@ -110,7 +111,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
         // Attendre que Firebase soit prêt
         const waitForFirebase = () => {
           if (!(window as any).firebase || typeof (window as any).firebase.auth !== 'function') {
-            console.log('⏳ Attente de Firebase...');
+            logger.log('⏳ Attente de Firebase...');
             setTimeout(waitForFirebase, 500);
             return;
           }
@@ -120,7 +121,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
               throw new Error('Container non disponible');
             }
 
-            console.log('✅ Firebase prêt, création du RecaptchaVerifier');
+            logger.log('✅ Firebase prêt, création du RecaptchaVerifier');
 
             // Créer un nouveau verifier pour chaque vérification
             const recaptchaVerifier = new (window as any).firebase.auth.RecaptchaVerifier(
@@ -128,7 +129,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
               {
                 size: attemptInvisibleVerification ? 'invisible' : 'normal',
                 callback: (token: string) => {
-                  console.log('✅ reCAPTCHA résolu');
+                  logger.log('✅ reCAPTCHA résolu');
                   if (resolveRef.current) {
                     resolveRef.current(token);
                     resolveRef.current = null;
@@ -136,7 +137,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
                   }
                 },
                 'error-callback': (error: any) => {
-                  console.error('❌ reCAPTCHA error:', error);
+                  logger.error('❌ reCAPTCHA error:', error);
                   if (rejectRef.current) {
                     rejectRef.current(new Error(error.message || 'reCAPTCHA verification failed'));
                     rejectRef.current = null;
@@ -149,13 +150,13 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
             // Render le reCAPTCHA
             recaptchaVerifier.render().then((widgetId: number) => {
               widgetIdRef.current = widgetId;
-              console.log('✅ reCAPTCHA rendu, widgetId:', widgetId);
+              logger.log('✅ reCAPTCHA rendu, widgetId:', widgetId);
 
               // Pour le mode invisible, déclencher automatiquement la vérification
               if (attemptInvisibleVerification) {
-                console.log('🚀 Déclenchement automatique du reCAPTCHA invisible');
+                logger.log('🚀 Déclenchement automatique du reCAPTCHA invisible');
                 recaptchaVerifier.verify().catch((error: any) => {
-                  console.error('❌ Erreur verify:', error);
+                  logger.error('❌ Erreur verify:', error);
                   if (rejectRef.current) {
                     rejectRef.current(error);
                     rejectRef.current = null;
@@ -164,14 +165,14 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
                 });
               }
             }).catch((error: any) => {
-              console.error('❌ Erreur render:', error);
+              logger.error('❌ Erreur render:', error);
               reject(error);
             });
 
             // Timeout de sécurité
             setTimeout(() => {
               if (rejectRef.current) {
-                console.error('⏱️ Timeout du reCAPTCHA');
+                logger.error('⏱️ Timeout du reCAPTCHA');
                 rejectRef.current(new Error('Le reCAPTCHA a pris trop de temps'));
                 rejectRef.current = null;
                 resolveRef.current = null;
@@ -179,7 +180,7 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
             }, 120000);
 
           } catch (error: any) {
-            console.error('❌ Erreur verify:', error);
+            logger.error('❌ Erreur verify:', error);
             reject(error);
           }
         };
@@ -189,12 +190,12 @@ const FirebaseRecaptchaVerifierWeb = forwardRef<
       });
     },
     _reset: () => {
-      console.log('🔄 Reset du reCAPTCHA');
+      logger.log('🔄 Reset du reCAPTCHA');
       if (widgetIdRef.current !== null && (window as any).grecaptcha) {
         try {
           (window as any).grecaptcha.reset(widgetIdRef.current);
         } catch (e) {
-          console.log('Reset error:', e);
+          logger.log('Reset error:', e);
         }
       }
       resolveRef.current = null;
